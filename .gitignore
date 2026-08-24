@@ -16,3 +16,6 @@ __pycache__/
 env/
 venv/
 .venv/
+
+# SDD scratch workspace
+.superpowers/
