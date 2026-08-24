@@ -1,0 +1,8 @@
+{
+  "assistant_name": "Jarvis",
+  "search_roots": [
+    "C:/Users/YourName/Documents"
+  ],
+  "greeting_cooldown_minutes": 30,
+  "reminder_poll_seconds": 15
+}

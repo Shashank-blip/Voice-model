@@ -1,0 +1,18 @@
+# runtime data
+data/
+
+# trained model artifacts (rebuilt via training/)
+models/
+
+# local config
+jarvis.config.json
+
+# python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.hypothesis/
+env/
+venv/
+.venv/

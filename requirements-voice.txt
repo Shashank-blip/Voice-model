@@ -1,0 +1,5 @@
+# Optional local voice stack. The core and text mode need no dependencies.
+sounddevice>=0.5
+numpy>=1.26
+openwakeword>=0.6
+faster-whisper>=1.1
