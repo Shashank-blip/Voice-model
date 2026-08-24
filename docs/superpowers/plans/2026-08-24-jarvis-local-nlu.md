@@ -322,7 +322,20 @@ git add -A && git commit -m "feat: scaffold jarvis_nlu with intent registry and 
 
 **Interfaces:**
 - Consumes: nothing.
-- Produces: `Reminder`, `Event`, `Note` frozen dataclasses; `Storage` class with `add_reminder(text, due_at) -> int`, `list_reminders(include_delivered=False) -> list[Reminder]`, `find_reminders_by_text(needle) -> list[Reminder]`, `cancel_reminder(reminder_id) -> bool`, `due_reminders(now) -> list[Reminder]`, `mark_delivered(reminder_id, when) -> None`, `add_event(title, starts_at) -> int`, `events_on(day) -> list[Event]`, `add_note(text, embedding=None) -> int`, `list_notes(limit=20) -> list[Note]`, `notes_with_embeddings() -> list[Note]`, `set_note_embedding(note_id, embedding) -> None`, `get_meta(key) -> str | None`, `set_meta(key, value) -> None`, `close() -> None`; module constant `SCHEMA_VERSION = 1`.
+- Produces: `Reminder`, `Event`, `Note` frozen dataclasses; `Storage` class with `add_reminder(text, due_at, now=None) -> int`, `list_reminders(include_delivered=False) -> list[Reminder]`, `find_reminders_by_text(needle) -> list[Reminder]`, `cancel_reminder(reminder_id) -> bool`, `due_reminders(now) -> list[Reminder]`, `mark_delivered(reminder_id, when) -> None`, `add_event(title, starts_at, now=None) -> int`, `events_on(day) -> list[Event]`, `add_note(text, embedding=None, now=None) -> int`, `list_notes(limit=20) -> list[Note]`, `notes_with_embeddings() -> list[Note]`, `set_note_embedding(note_id, embedding) -> None`, `get_meta(key) -> str | None`, `set_meta(key, value) -> None`, `close() -> None`; module constant `SCHEMA_VERSION = 1`.
+
+**Clock injection (ruling, 2026-08-25).** The three `add_*` methods take an
+optional trailing `now: datetime | None = None`, defaulting to
+`datetime.now()`, used for the `created_at` stamp. This satisfies the global
+constraint without breaking any call site. Callers that already hold a clock —
+every skill in Tasks 6 and 7 — MUST pass it through, so `created_at` is
+fixed-clock testable.
+
+**Connection locking.** `Storage` holds a `threading.Lock` (or `RLock`) taken
+around every method that executes SQL. `check_same_thread=False` plus WAL is
+NOT sufficient: SQLite's file lock serialises separate connections, not
+concurrent calls on one shared connection, and the proactive scheduler thread
+(Task 10) shares this one with the main thread.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -1486,7 +1499,7 @@ def add(storage: Storage, text: str, now: datetime) -> str:
     body = _body(slot.residual if slot else text)
     if not body:
         body = "that"
-    storage.add_reminder(body, slot.when if slot else None)
+    storage.add_reminder(body, slot.when if slot else None, now=now)
     if slot is None:
         return f"Saved — {body}. When should I remind you, sugar?"
     return f"You got it. I'll remind you to {body} at {_pretty(slot.when)}."
@@ -1697,7 +1710,7 @@ def add(storage: Storage, text: str, now: datetime) -> str:
     title = _ADD_TRAILER.sub("", _ADD_LEAD_IN.sub("", slot.residual)).strip(" ,.")
     if not title:
         return "What should I call that one?"
-    storage.add_event(title, slot.when)
+    storage.add_event(title, slot.when, now=now)
     return f"Got it — {title} at {_pretty(slot.when)} on {slot.when.strftime('%A')}."
 
 
@@ -1751,7 +1764,7 @@ def add(storage: Storage, text: str, now: datetime,
     body = _ADD_LEAD_IN.sub("", text).strip(" ,.")
     if not body:
         return "What would you like me to note down, sugar?"
-    storage.add_note(body, embedder(body) if embedder else None)
+    storage.add_note(body, embedder(body) if embedder else None, now=now)
     return "Noted, sugar."
 
 
