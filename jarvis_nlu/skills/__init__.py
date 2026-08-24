@@ -1,1 +1,2 @@
-"""Skill handlers for jarvis_nlu. Populated by later tasks."""
+"""Deterministic skill implementations. Skills receive storage and plain
+arguments, return spoken strings, and never touch the classifier."""
