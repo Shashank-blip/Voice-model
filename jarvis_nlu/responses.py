@@ -30,16 +30,6 @@ POOLS: dict[str, list[str]] = {
         "Never better. How you feelin'?",
         "Just dandy, thanks for askin'. And you?",
     ],
-    "user_mood": [
-        "So tell me, how're you feelin' about things?",
-        "What's goin' on in that head of yours?",
-        "How's your mood treatin' you today?",
-        "What's the vibe right now?",
-        "You feelin' okay, sugar?",
-        "Everything alright with you?",
-        "How's your heart today?",
-        "What's the real story, hon?",
-    ],
     "user_mood_positive": [
         "Well that's just lovely to hear!",
         "Glad to hear it, sugar.",

@@ -5,8 +5,18 @@ from jarvis_nlu.responses import POOLS, ResponsePool
 
 
 def test_every_smalltalk_intent_has_a_pool():
+    """Every small-talk intent must be answerable.
+
+    Most intents map 1:1 to a pool keyed by their value.
+    user_mood is special: it branches on mood polarity via three sub-keyed pools.
+    """
     for intent in SMALLTALK_INTENTS:
-        assert intent.value in POOLS, f"missing pool for {intent.value}"
+        if intent.value == "user_mood":
+            # user_mood requires all three sub-keys; the base key is never used
+            for subkey in ["user_mood_positive", "user_mood_negative", "user_mood_tired"]:
+                assert subkey in POOLS, f"missing pool for {subkey}"
+        else:
+            assert intent.value in POOLS, f"missing pool for {intent.value}"
 
 
 def test_pools_meet_minimum_variant_count():
