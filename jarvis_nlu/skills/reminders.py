@@ -39,6 +39,11 @@ _CANCEL_LEAD_IN = re.compile(
     r"(?:the\s+|my\s+)?", re.I)
 _CANCEL_TRAILER = re.compile(r"\s*reminder(?:s)?\s*$", re.I)
 
+# Stored/spoken in place of a body when extraction left nothing behind (e.g.
+# "remind me at 6" -- the whole utterance was lead-in plus a time
+# expression, with no residual words at all).
+_PLACEHOLDER_BODY = "that"
+
 
 def _body(text: str) -> str:
     return _LEAD_IN.sub("", text).strip(" ,.")
@@ -51,16 +56,23 @@ def needs_time(text: str, now: datetime) -> bool:
 def add(storage: Storage, text: str, now: datetime) -> str:
     slot = extract_time(text, now)
     # Strip the time first so the lead-in regex sees a clean body.
-    body = _body(slot.residual if slot else text)
-    if not body:
-        # extract_time can leave an empty residual (e.g. "at 6" alone) --
-        # fall back to a placeholder so the saved text and spoken reply
-        # both stay sane rather than empty.
-        body = "that"
+    raw_body = _body(slot.residual if slot else text)
+    body = raw_body or _PLACEHOLDER_BODY
     storage.add_reminder(body, slot.when if slot else None, now=now)
     if slot is None:
+        if not raw_body:
+            return "Saved. When should I remind you, sugar?"
         return f"Saved — {body}. When should I remind you, sugar?"
-    return f"You got it. I'll remind you to {body} at {_pretty(slot.when)}."
+    # The body can be a bare verb phrase ("call mom") or a full clause
+    # ("I'm meeting Bob") -- a template that prepends "to" only reads right
+    # for the former ("...to I'm meeting Bob" is not English). Framing the
+    # body as its own clause after an em dash reads naturally for either
+    # shape, and the placeholder case drops the body altogether rather than
+    # speaking the word "that".
+    when_str = _pretty(slot.when)
+    if not raw_body:
+        return f"You got it — I'll give you a nudge at {when_str}."
+    return f"You got it — {body}, at {when_str}."
 
 
 def _pretty(when: datetime) -> str:
@@ -77,7 +89,11 @@ def list_pending(storage: Storage, now: datetime) -> str:
     parts = []
     for reminder in pending[:5]:
         when = f" at {_pretty(reminder.due_at)}" if reminder.due_at else " (no time set)"
-        parts.append(f"{reminder.text}{when}")
+        # A placeholder-bodied reminder is stored under the literal word
+        # "that" (see `add`); read aloud, "that at 6 PM" is a fragment, not
+        # a sentence, so speak it as a generic reminder instead.
+        label = "a reminder" if reminder.text == _PLACEHOLDER_BODY else reminder.text
+        parts.append(f"{label}{when}")
     return "Here's what you've got: " + "; ".join(parts) + "."
 
 

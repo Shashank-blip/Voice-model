@@ -80,3 +80,36 @@ def test_cancel_asks_when_multiple_match(store):
     reply = reminders.cancel(store, "cancel the call mom reminder", NOW)
     assert len(store.list_reminders()) == 2  # nothing destroyed on ambiguity
     assert "which" in reply.lower()
+
+
+def test_add_reply_reads_naturally_for_a_verb_phrase_body(store):
+    reply = reminders.add(store, "remind me to call mom at 6 pm", NOW)
+    assert reply == "You got it — call mom, at 6:00 PM on Monday."
+
+
+def test_add_reply_reads_naturally_for_a_clause_body(store):
+    reply = reminders.add(store, "remind me I'm meeting Bob tomorrow at 5 pm", NOW)
+    assert reply == "You got it — I'm meeting Bob, at 5:00 PM on Tuesday."
+
+
+def test_add_reply_drops_placeholder_body_entirely(store):
+    reply = reminders.add(store, "remind me at 6", NOW)
+    assert reply == "You got it — I'll give you a nudge at 6:00 PM on Monday."
+
+
+def test_list_pending_reads_naturally_for_a_verb_phrase_body(store):
+    reminders.add(store, "remind me to call mom at 6 pm", NOW)
+    reply = reminders.list_pending(store, NOW)
+    assert reply == "Here's what you've got: call mom at 6:00 PM on Monday."
+
+
+def test_list_pending_reads_naturally_for_a_clause_body(store):
+    reminders.add(store, "remind me I'm meeting Bob tomorrow at 5 pm", NOW)
+    reply = reminders.list_pending(store, NOW)
+    assert reply == "Here's what you've got: I'm meeting Bob at 5:00 PM on Tuesday."
+
+
+def test_list_pending_drops_placeholder_body_entirely(store):
+    reminders.add(store, "remind me at 6", NOW)
+    reply = reminders.list_pending(store, NOW)
+    assert reply == "Here's what you've got: a reminder at 6:00 PM on Monday."
