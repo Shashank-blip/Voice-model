@@ -42,7 +42,6 @@ class Scheduler:
     def _speak_due_reminders(self, now: datetime) -> None:
         for reminder in self.storage.due_reminders(now):
             message = f"Heads up, sugar — you asked me to remind you to {reminder.text}."
-            print(message)
             self.speak(message)
             # Recorded only after speak() returns: if speak() raises, this
             # line never runs and delivered_at stays NULL, so the reminder
@@ -73,7 +72,6 @@ class Scheduler:
         if pending:
             parts.append(f"and {len(pending)} reminder{'s' if len(pending) != 1 else ''} pendin'")
         message = "Mornin', sugar. Here's your day — " + ", ".join(parts) + "."
-        print(message)
         self.speak(message)
         self.storage.set_meta(BRIEF_KEY, today)
 

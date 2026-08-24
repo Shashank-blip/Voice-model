@@ -194,3 +194,20 @@ def test_start_thread_survives_a_raising_tick(store):
     finally:
         scheduler.stop()
     assert scheduler._thread is None
+
+
+def test_library_never_writes_to_stdout(store, capsys):
+    """jarvis_nlu is a library: `speak` is the sole output channel. The host
+    app (e.g. miss-minutes) owns the console and already prints what it
+    speaks, so any print() here would double up the announcement."""
+    spoken = []
+    store.add_reminder("call mom", datetime(2026, 8, 24, 18, 0))
+    store.add_event("dentist", datetime(2026, 8, 24, 16, 0))
+    scheduler = Scheduler(storage=store, speak=spoken.append,
+                          turn_lock=threading.Lock(), daily_brief_at="08:30")
+
+    scheduler.tick(datetime(2026, 8, 24, 18, 1))   # delivers the reminder
+    scheduler.tick(datetime(2026, 8, 24, 8, 31))   # fires the daily brief
+
+    assert len(spoken) == 2  # the reminder announcement and the brief
+    assert capsys.readouterr().out == ""
