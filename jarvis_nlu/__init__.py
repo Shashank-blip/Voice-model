@@ -1,8 +1,12 @@
 """Local-first NLU for the Jarvis / Miss Minutes voice assistant.
 
-This package makes no network calls. Exports are added as tasks land.
+This package makes no network calls.
 """
 from jarvis_nlu.config import Config
 from jarvis_nlu.intents import Intent
+from jarvis_nlu.model import Classifier, Thresholds
+from jarvis_nlu.router import Assistant, Result
+from jarvis_nlu.storage import Storage
 
-__all__ = ["Config", "Intent"]
+__all__ = ["Assistant", "Classifier", "Config", "Intent", "Result",
+           "Storage", "Thresholds"]
