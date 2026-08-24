@@ -43,7 +43,7 @@ def test_list_recent_returns_newest_first(store):
 
 def test_search_falls_back_to_substring_without_an_embedder(store):
     notes.add(store, "note the wifi password is hunter2", NOW)
-    notes.add(store, "note buy oat milk", NOW)
+    notes.add(store, "note buy the oat milk", NOW)
     reply = notes.search(store, "what did I note about the wifi")
     assert "hunter2" in reply
     assert "oat milk" not in reply
@@ -70,3 +70,18 @@ def test_search_no_match_full_reply_string(store):
     notes.add(store, "note buy milk", NOW)
     reply = notes.search(store, "what did I note about taxes")
     assert reply == "I couldn't find a note about that, sugar."
+
+
+def test_search_fallback_ignores_stopwords(store):
+    notes.add(store, "note buy milk", NOW)
+    notes.add(store, "note the wifi password is hunter2", NOW)
+    notes.add(store, "note the bins go out tuesday", NOW)
+    reply = notes.search(store, "what did I note about the wifi")
+    assert reply == "You noted: the wifi password is hunter2."
+
+
+def test_search_all_stopwords_asks_instead_of_matching_everything(store):
+    notes.add(store, "note buy milk", NOW)
+    notes.add(store, "note the wifi password is hunter2", NOW)
+    reply = notes.search(store, "what did I note about that")
+    assert reply == "What should I look for, sugar?"

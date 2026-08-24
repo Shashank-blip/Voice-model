@@ -4,6 +4,13 @@
 supplies a real one backed by `jarvis_nlu.embeddings.rank_notes`; until then,
 every caller passes `embedder=None` and `search` falls back to substring
 matching over note text, so this skill is fully testable standalone.
+
+The substring fallback filters out common English stopwords (see
+`_STOPWORDS`) in addition to its length-3+ filter -- without that, a query
+like "what did I note about the wifi" reduces to the terms {"the", "wifi"},
+and "the" alone matches nearly every note in the store, surfacing unrelated
+results ahead of the actual match. If stopword filtering leaves no terms at
+all, the fallback asks what to search for rather than matching everything.
 """
 from __future__ import annotations
 
@@ -22,6 +29,16 @@ _ADD_LEAD_IN = re.compile(
 _SEARCH_LEAD_IN = re.compile(
     r"^\s*(?:what did i|what'd i|did i)?\s*"
     r"(?:note|write|say|save|jot)?\s*(?:down)?\s*(?:about|regarding|on)\s*", re.I)
+
+# Stopwords excluded from the substring fallback's search terms -- a query
+# like "what did I note about the wifi" reduces (after `_SEARCH_LEAD_IN`
+# strips its lead-in) to "the wifi"; without this filter "the" alone would
+# match nearly every note in the store.
+_STOPWORDS = {
+    "the", "and", "for", "about", "that", "this", "with", "from", "was",
+    "were", "what", "when", "where", "did", "does", "note", "notes",
+    "have", "has", "had", "you", "your", "out", "get", "got",
+}
 
 Embedder = Callable[[str], bytes]
 
@@ -55,7 +72,11 @@ def search(storage: Storage, text: str, embedder: Embedder | None = None) -> str
         return "I couldn't find a note about that, sugar."
 
     # Substring fallback: keeps this skill usable before the embedder exists.
-    terms = [t for t in re.findall(r"\w+", query.lower()) if len(t) > 2]
+    # Stopwords are dropped on top of the length filter -- see `_STOPWORDS`.
+    terms = [t for t in re.findall(r"\w+", query.lower())
+             if len(t) > 2 and t not in _STOPWORDS]
+    if not terms:
+        return "What should I look for, sugar?"
     hits = [n for n in storage.list_notes(limit=100)
             if any(t in n.text.lower() for t in terms)]
     if not hits:
