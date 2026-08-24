@@ -1,1 +1,0 @@
-"""Local-first Jarvis assistant."""
