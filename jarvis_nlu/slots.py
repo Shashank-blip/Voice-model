@@ -22,8 +22,13 @@ Two disambiguation rules matter more than the rest of the grammar:
    not 6: at MORNING (09:00) a standalone "at 7" or "at 8" has already
    missed its AM reading, so next-occurrence picks PM for both; the fixed
    default has to pick PM for both too, with no `now` to consult.
-   "tonight" overrides this to always mean evening, regardless of the hour
-   (including 12, which reads as midnight in that context, not noon).
+   "tonight" is its own case, not a variant of rule 2: it spans from evening
+   into the small hours of the FOLLOWING calendar day, so it can shift the
+   date, not just the meridiem. 6-11 stay this evening (PM, today's date);
+   12 and 1-5 are that night's midnight/small hours (AM, tomorrow's date) --
+   "tonight at 1" means 1 AM after midnight, not 1 PM this afternoon. An
+   explicit meridiem always wins ("tonight at 12 am" is still tomorrow
+   00:00; "tonight at 8 pm" is still today 20:00). See `_tonight_clock`.
 
 A named weekday that matches today's weekday ("monday" said on a Monday)
 always means next week, never today -- `_resolve_weekday` enforces that by
@@ -141,26 +146,41 @@ def _safe_datetime(base: datetime, hour: int, minute: int) -> datetime | None:
         return None
 
 
-def _clock_from(match: re.Match, *, ambiguous_pm: bool = False) -> tuple[int, int] | None:
+def _clock_from(match: re.Match) -> tuple[int, int] | None:
     """Read hour/minute/meridiem off `match`, returning None if no time was
-    captured at all. `ambiguous_pm` biases an unmarked hour towards PM (used
-    for 'tonight'), otherwise the smart daytime default is applied."""
+    captured at all. With no meridiem, the smart daytime default applies."""
+    if not match.group("hour"):
+        return None
+    hour, minute = int(match.group("hour")), int(match.group("minute") or 0)
+    meridiem = match.group("meridiem")
+    hour = _apply_meridiem(hour, meridiem) if meridiem else _smart_default_hour(hour)
+    return hour, minute
+
+
+def _tonight_clock(match: re.Match) -> tuple[int, int, int] | None:
+    """Read hour/minute/meridiem off a 'tonight' match, returning
+    (hour, minute, day_offset) -- None if no time was captured at all.
+
+    Tonight spans from evening into the small hours of the FOLLOWING
+    calendar day, so resolving it can shift the date, not just pick a
+    meridiem: 6-11 stay this evening (PM, day_offset 0); 12 and 1-5 are
+    that night's midnight/small hours (AM, day_offset 1) even with no
+    meridiem given -- 'tonight at 1' means 1 AM after midnight, not 1 PM
+    this afternoon. An explicit meridiem always wins over this default."""
     if not match.group("hour"):
         return None
     hour, minute = int(match.group("hour")), int(match.group("minute") or 0)
     meridiem = match.group("meridiem")
     if meridiem:
         hour = _apply_meridiem(hour, meridiem)
-    elif ambiguous_pm:
-        # 'tonight' implies evening; an unqualified 12 in that context reads
-        # as midnight (matching explicit '12 am'), not noon.
-        if hour == 12:
-            hour = 0
-        elif hour < 12:
-            hour += 12
-    else:
-        hour = _smart_default_hour(hour)
-    return hour, minute
+    elif hour == 12:
+        hour = 0
+    elif hour <= 5:
+        pass  # already reads as the AM hour it is
+    elif hour <= 11:
+        hour += 12
+    day_offset = 1 if hour < 6 else 0
+    return hour, minute, day_offset
 
 
 def _resolve_offset(match: re.Match, now: datetime) -> datetime:
@@ -201,21 +221,26 @@ def _resolve_weekday(match: re.Match, now: datetime) -> datetime | None:
 
 def _resolve_relday(match: re.Match, now: datetime) -> datetime | None:
     word = match.group("relday").lower()
-    # "today"/"tonight" are literal: if the stated time already passed, we
-    # still resolve to today rather than silently rolling to tomorrow (see
-    # module docstring for why that's the right call here specifically).
-    base_day = now + timedelta(days=1) if word == "tomorrow" else now
     daypart = match.groupdict().get("daypart")
+
+    if word == "tonight" and not daypart:
+        # Tonight can roll the date (see _tonight_clock), so it needs its
+        # own day-offset handling instead of the plain today/tomorrow split
+        # below.
+        clock = _tonight_clock(match)
+        hour, minute, day_offset = clock if clock else (*DAYPARTS["tonight"], 0)
+        return _safe_datetime(now + timedelta(days=day_offset), hour, minute)
+
+    # "today" (and "tonight <daypart>") are literal: if the stated time
+    # already passed, we still resolve to today rather than silently
+    # rolling to tomorrow (see module docstring for why that's the right
+    # call here specifically).
+    base_day = now + timedelta(days=1) if word == "tomorrow" else now
     if daypart:
         hour, minute = DAYPARTS[daypart.lower()]
     else:
-        clock = _clock_from(match, ambiguous_pm=(word == "tonight"))
-        if clock:
-            hour, minute = clock
-        elif word == "tonight":
-            hour, minute = DAYPARTS["tonight"]
-        else:
-            hour, minute = 9, 0
+        clock = _clock_from(match)
+        hour, minute = clock if clock else (9, 0)
     return _safe_datetime(base_day, hour, minute)
 
 

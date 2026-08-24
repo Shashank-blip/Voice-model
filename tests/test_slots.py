@@ -135,9 +135,46 @@ def test_meridiem_time_picked_up_without_at_keyword():
     assert slot2.residual == ""
 
 
-def test_tonight_at_12_is_midnight_not_noon():
-    """'tonight' implies evening, but an unqualified 12 in that context
-    means midnight (matching explicit '12 am'), not noon."""
-    slot = extract_time("tonight at 12", MORNING)
-    assert slot is not None
-    assert slot.when == datetime(2026, 8, 24, 0, 0)
+# NOTE: round-1's test_tonight_at_12_is_midnight_not_noon asserted that
+# "tonight at 12" resolves to 2026-08-24 00:00 (today, 9 hours in the past
+# relative to MORNING). Round-2 review found that value itself wrong: a
+# bare 12 alongside "tonight" is midnight of the FOLLOWING calendar day,
+# not today's already-past midnight. That test is superseded by the
+# parametrised one below, which pins the corrected value together with the
+# rest of the tonight small-hours rollover.
+@pytest.mark.parametrize("text,now,expected", [
+    ("tonight at 12", MORNING, datetime(2026, 8, 25, 0, 0)),
+    ("tonight at 12 am", MORNING, datetime(2026, 8, 25, 0, 0)),
+    ("tonight at 1", MORNING, datetime(2026, 8, 25, 1, 0)),
+    ("tonight at 3", MORNING, datetime(2026, 8, 25, 3, 0)),
+    ("tonight at 6", MORNING, datetime(2026, 8, 24, 18, 0)),
+    ("tonight at 11", MORNING, datetime(2026, 8, 24, 23, 0)),
+    ("tonight", MORNING, datetime(2026, 8, 24, 20, 0)),
+    ("tonight at 8 pm", MORNING, datetime(2026, 8, 24, 20, 0)),
+    # Pinned from the other side too: at 23:00, "tonight at 1" is still
+    # ~2 hours away, on the following calendar date.
+    ("tonight at 1", datetime(2026, 8, 24, 23, 0), datetime(2026, 8, 25, 1, 0)),
+])
+def test_tonight_spans_into_small_hours_of_the_following_day(text, now, expected):
+    """'tonight' spans from evening into the small hours of the FOLLOWING
+    calendar day: hours 6-11 stay this evening (PM, today's date); 12 and
+    1-5 are that night's midnight/small hours (AM, tomorrow's date), even
+    with no meridiem given. An explicit meridiem always wins over this
+    default ('tonight at 8 pm' stays today 20:00)."""
+    slot = extract_time(text, now)
+    assert slot is not None, f"no time found in {text!r}"
+    assert slot.when == expected
+
+
+@pytest.mark.parametrize("text,now,expected", [
+    ("at 12", MORNING, datetime(2026, 8, 24, 12, 0)),
+    ("at 12", datetime(2026, 8, 24, 22, 0), datetime(2026, 8, 25, 0, 0)),
+    ("tomorrow at 12", MORNING, datetime(2026, 8, 25, 12, 0)),
+])
+def test_bare_and_tomorrow_hour_12_unaffected_by_tonight_fix(text, now, expected):
+    """The tonight-specific small-hours rollover must not leak into the
+    unrelated bare-time next-occurrence rule or the tomorrow smart default
+    -- both continue to treat a bare 12 as noon-ish, not midnight."""
+    slot = extract_time(text, now)
+    assert slot is not None, f"no time found in {text!r}"
+    assert slot.when == expected
