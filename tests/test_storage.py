@@ -90,6 +90,25 @@ def test_reopening_database_is_idempotent(tmp_path):
     second.close()
 
 
+def test_add_reminder_uses_injected_now_for_created_at(store):
+    injected = datetime(2020, 1, 1, 12, 0)
+    store.add_reminder("x", None, now=injected)
+    assert store.list_reminders()[0].created_at == injected
+
+
+def test_add_event_uses_injected_now_for_created_at(store):
+    injected = datetime(2020, 1, 1, 12, 0)
+    store.add_event("standup", datetime(2026, 8, 24, 9, 0), now=injected)
+    row = store._conn.execute("SELECT created_at FROM events").fetchone()
+    assert row["created_at"] == injected.isoformat()
+
+
+def test_add_note_uses_injected_now_for_created_at(store):
+    injected = datetime(2020, 1, 1, 12, 0)
+    store.add_note("wifi password", now=injected)
+    assert store.list_notes()[0].created_at == injected
+
+
 @pytest.mark.xfail(reason="needs Task 3 slots")
 def test_migrates_legacy_minutes_schema(tmp_path):
     """miss-minutes' existing db has free-text `due` and no events table."""
