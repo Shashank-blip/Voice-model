@@ -73,3 +73,71 @@ def test_named_weekday_matching_today_goes_to_next_week():
     """'monday' said on a Monday means next Monday, not zero days away."""
     slot = extract_time("monday", MORNING)
     assert slot.when.date() == datetime(2026, 8, 31).date()
+
+
+# --- Regression tests: defects found in code review of Task 3 ---
+
+def test_invalid_hour_returns_none_not_valueerror():
+    """STT noise can produce out-of-range hours; extract_time must return
+    None, never raise ValueError out of .replace()."""
+    assert extract_time("tomorrow at 25", MORNING) is None
+    assert extract_time("on friday at 30", MORNING) is None
+    assert extract_time("2026-08-30 at 44", MORNING) is None
+    assert extract_time("tomorrow at 13 pm", MORNING) is None
+
+
+def test_invalid_iso_date_returns_none_not_valueerror():
+    """An impossible calendar date (month 13, day 45) must not raise out of
+    strptime, and must not fall back to a weaker pattern matching a valid
+    time elsewhere in the string."""
+    assert extract_time("2026-13-45 at 4pm", MORNING) is None
+
+
+@pytest.mark.parametrize("text,now,expected", [
+    ("at 7", MORNING, datetime(2026, 8, 24, 19, 0)),
+    ("tomorrow at 7", MORNING, datetime(2026, 8, 25, 19, 0)),
+    ("at 8", MORNING, datetime(2026, 8, 24, 20, 0)),
+    ("tomorrow at 8", MORNING, datetime(2026, 8, 25, 20, 0)),
+])
+def test_ambiguous_hour_7_and_8_agree_with_and_without_a_day(text, now, expected):
+    """Hours 7 and 8 must resolve to the same meridiem whether or not a day
+    word is attached -- 'at 7' and 'tomorrow at 7' both mean 7 PM."""
+    slot = extract_time(text, now)
+    assert slot is not None, f"no time found in {text!r}"
+    assert slot.when == expected
+
+
+def test_today_with_explicit_past_time_stays_today_not_rolled_forward():
+    """'today' is taken literally: if the stated clock time has already
+    passed, the reminder still resolves to today rather than silently
+    rolling to tomorrow."""
+    slot = extract_time("today at 4", datetime(2026, 8, 24, 20, 0))
+    assert slot is not None
+    assert slot.when == datetime(2026, 8, 24, 16, 0)
+
+    slot2 = extract_time("today at 9", datetime(2026, 8, 24, 14, 30))
+    assert slot2 is not None
+    assert slot2.when == datetime(2026, 8, 24, 9, 0)
+
+
+def test_meridiem_time_picked_up_without_at_keyword():
+    """An explicit-meridiem time attached to a day word must be picked up
+    even when it isn't introduced by 'at' -- regardless of whether the time
+    leads or trails the day word."""
+    slot = extract_time("meeting 3pm tomorrow", MORNING)
+    assert slot is not None
+    assert slot.when == datetime(2026, 8, 25, 15, 0)
+    assert slot.residual == "meeting"
+
+    slot2 = extract_time("friday 4pm", MORNING)
+    assert slot2 is not None
+    assert slot2.when == datetime(2026, 8, 28, 16, 0)
+    assert slot2.residual == ""
+
+
+def test_tonight_at_12_is_midnight_not_noon():
+    """'tonight' implies evening, but an unqualified 12 in that context
+    means midnight (matching explicit '12 am'), not noon."""
+    slot = extract_time("tonight at 12", MORNING)
+    assert slot is not None
+    assert slot.when == datetime(2026, 8, 24, 0, 0)
