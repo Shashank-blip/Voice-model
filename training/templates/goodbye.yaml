@@ -1,0 +1,26 @@
+intent: goodbye
+slots:
+  closer:
+  - ''
+  - jarvis
+  - for now
+  - buddy
+  - talk soon
+  - take care
+  - see ya
+  - my friend
+patterns:
+- bye {closer}
+- goodbye {closer}
+- see you later {closer}
+- talk to you later {closer}
+- catch you later {closer}
+- i'm heading out {closer}
+- gotta go {closer}
+- see ya {closer}
+- i'm off {closer}
+- that's all for now {closer}
+- talk soon {closer}
+- see you tomorrow {closer}
+- shutting down for now {closer}
+- i'm done for today {closer}

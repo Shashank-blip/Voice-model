@@ -1,0 +1,27 @@
+intent: get_time
+slots:
+  hedge:
+  - ''
+  - please
+  - right now
+  - exactly
+  - currently
+  - real quick
+  - for me
+  - quickly
+  - at the moment
+patterns:
+- what time is it {hedge}
+- what's the time {hedge}
+- do you know what time it is {hedge}
+- tell me the time {hedge}
+- can you tell me the time {hedge}
+- what time do you have {hedge}
+- got the time {hedge}
+- what's the current time {hedge}
+- how late is it {hedge}
+- give me the time {hedge}
+- do you have the time {hedge}
+- i need to know the time {hedge}
+- check the time for me {hedge}
+- what time is it right now

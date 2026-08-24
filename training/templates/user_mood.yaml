@@ -1,0 +1,36 @@
+intent: user_mood
+slots:
+  feeling:
+  - happy
+  - sad
+  - tired
+  - stressed
+  - excited
+  - exhausted
+  - anxious
+  - great
+  - terrible
+  - okay
+  - not so good
+  - really good
+  - kind of down
+  - on top of the world
+  - overwhelmed
+  - in a good mood
+  - in a bad mood
+  - a bit off today
+patterns:
+- i'm feeling {feeling}
+- i feel {feeling}
+- i am {feeling} today
+- honestly i'm {feeling}
+- today i'm {feeling}
+- i've been {feeling} lately
+- feeling pretty {feeling}
+- i'm kind of {feeling}
+- not gonna lie i'm {feeling}
+- i'm a bit {feeling}
+- things have been {feeling}
+- i'm really {feeling} right now
+- gotta say i'm {feeling}
+- honestly today i feel {feeling}

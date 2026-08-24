@@ -1,0 +1,25 @@
+intent: sleep
+slots:
+  hedge:
+  - ''
+  - jarvis
+  - for now
+  - please
+  - for a while
+  - until later
+  - for the night
+patterns:
+- go to sleep {hedge}
+- power down {hedge}
+- stop listening {hedge}
+- shut down {hedge}
+- go dormant {hedge}
+- pause {hedge}
+- go to standby {hedge}
+- that'll be all {hedge}
+- take a break {hedge}
+- stand down {hedge}
+- go to sleep mode {hedge}
+- that's enough {hedge}
+- rest for now {hedge}
+- power off {hedge}

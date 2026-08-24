@@ -1,0 +1,29 @@
+intent: list_notes
+slots:
+  day:
+  - today
+  - this week
+  - yesterday
+  - recently
+  - from this morning
+  - this month
+  - so far
+  - ''
+patterns:
+- what are my notes {day}
+- show me my notes {day}
+- read my notes {day}
+- what notes do i have {day}
+- list all my notes {day}
+- what have i written down {day}
+- read out my notes {day}
+- show my notes from {day}
+- what notes did i take {day}
+- pull up my notes {day}
+- what's in my notes {day}
+- read me my note list {day}
+- do i have any notes {day}
+- show me everything i've noted {day}
+- what did i write down {day}
+- go through my notes {day}
+- what notes have i saved {day}

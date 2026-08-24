@@ -1,0 +1,33 @@
+intent: greeting
+slots:
+  opener:
+  - hey
+  - hi
+  - hello
+  - yo
+  - hiya
+  - howdy
+  - what's up
+  - hey there
+  - good morning
+  - good afternoon
+  - good evening
+  - sup
+  - hey jarvis
+  - hello there
+  - greetings
+  - morning
+patterns:
+- '{opener}'
+- '{opener} jarvis'
+- '{opener} there'
+- oh {opener}
+- '{opener}, how''s it going'
+- '{opener} can you hear me'
+- '{opener} you there'
+- '{opener} i''m back'
+- '{opener} good to see you'
+- '{opener} anyone home'
+- '{opener} it''s me'
+- '{opener} what''s good'
+- '{opener} it''s me again'

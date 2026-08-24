@@ -1,0 +1,415 @@
+intent: out_of_scope
+slots: {}
+patterns:
+- what's the capital of france
+- what is the capital of france
+- what's the capital of japan
+- what is the capital of japan
+- what's the capital of australia
+- what is the capital of australia
+- what's the capital of brazil
+- what is the capital of brazil
+- what's the capital of egypt
+- what is the capital of egypt
+- what's the capital of canada
+- what is the capital of canada
+- what's the capital of germany
+- what is the capital of germany
+- what's the capital of italy
+- what is the capital of italy
+- what's the capital of spain
+- what is the capital of spain
+- what's the capital of mexico
+- what is the capital of mexico
+- what's the capital of russia
+- what is the capital of russia
+- what's the capital of china
+- what is the capital of china
+- what's the capital of india
+- what is the capital of india
+- what's the capital of kenya
+- what is the capital of kenya
+- what's the capital of norway
+- what is the capital of norway
+- what's the weather in tokyo
+- is it going to rain in tokyo tomorrow
+- what's the weather in london
+- is it going to rain in london tomorrow
+- what's the weather in new york
+- is it going to rain in new york tomorrow
+- what's the weather in paris
+- is it going to rain in paris tomorrow
+- what's the weather in delhi
+- is it going to rain in delhi tomorrow
+- what's the weather in sydney
+- is it going to rain in sydney tomorrow
+- what's the weather in chicago
+- is it going to rain in chicago tomorrow
+- what's the weather in berlin
+- is it going to rain in berlin tomorrow
+- what's the weather in seattle
+- is it going to rain in seattle tomorrow
+- what's the weather in miami
+- is it going to rain in miami tomorrow
+- what's 17 times 23
+- what's 144 divided by 12
+- what's the square root of 256
+- what's 15 percent of 200
+- what's 2 to the power of 10
+- what's 9 times 9
+- how much is 45 plus 78
+- what's a third of 90
+- what's 500 minus 237
+- convert 100 fahrenheit to celsius
+- how many kilometers are in 5 miles
+- how many ounces in a pound
+- what's the square root of 144
+- what's 7 squared
+- how many minutes are in a week
+- write me a python function that sorts a list
+- how do i fix a merge conflict
+- what does this error mean
+- what's the difference between tcp and udp
+- explain recursion to me
+- how do i reverse a linked list
+- what's the difference between a list and a tuple in python
+- how do i center a div in css
+- what's a hash map
+- explain how binary search works
+- what's the difference between rest and graphql
+- how do i write a for loop in javascript
+- what's a race condition
+- how do i undo the last git commit
+- explain what an api is
+- what's the difference between sql and nosql
+- how does garbage collection work
+- what's a null pointer exception
+- how do i install python on windows
+- explain object oriented programming
+- what's the time complexity of quicksort
+- how do i set up a virtual environment
+- what's a docker container
+- explain what a compiler does
+- who won the world cup
+- who wrote pride and prejudice
+- how far away is the moon
+- who was the first president of the united states
+- when did world war two end
+- who painted the mona lisa
+- how tall is mount everest
+- what causes thunder
+- how many bones are in the human body
+- how old is the universe
+- who invented the telephone
+- what's the largest ocean
+- how many continents are there
+- who discovered gravity
+- what's the speed of light
+- when was the eiffel tower built
+- how long do elephants live
+- what's the smallest country in the world
+- who won the last super bowl
+- who is the current pope
+- what year did the titanic sink
+- who composed the ninth symphony
+- what's the deepest part of the ocean
+- how many planets are in the solar system
+- who was cleopatra
+- what caused the fall of the roman empire
+- how do volcanoes form
+- what's the tallest building in the world
+- who won the nobel peace prize this year
+- what language do they speak in brazil
+- how many people live in china
+- what's the longest river in the world
+- who directed the godfather
+- when is the next solar eclipse
+- what's the population of india
+- how do bees make honey
+- why is the sky blue
+- how do airplanes fly
+- what's the difference between a crocodile and an alligator
+- how do vaccines work
+- what's the best programming language
+- cats or dogs which is better
+- what's the best movie ever made
+- what's the meaning of life
+- is pineapple ok on pizza
+- what's your favorite color
+- do you believe in aliens
+- what's the best phone to buy right now
+- should i get a haircut
+- what do you think of my outfit
+- is it worth learning rust
+- what's a good name for a startup
+- should i quit my job
+- what's the best way to learn a language
+- do you think it will rain this weekend without checking
+- what's your opinion on remote work
+- should i buy a house or rent
+- what's the best diet to lose weight
+- is coffee bad for you
+- which is better android or iphone
+- play some music
+- send an email to my boss
+- turn on the living room lights
+- order me a pizza
+- call an uber for me
+- search the web for flights to paris
+- translate this into spanish
+- play my spotify playlist
+- text my sister that i'm running late
+- set the thermostat to 70
+- turn off the porch light
+- add milk to my shopping cart
+- book a table at a restaurant for two
+- check my bank balance
+- read my emails out loud
+- call mom on the phone
+- put on some jazz music
+- dim the bedroom lights
+- order a coffee for me
+- check if the front door is locked
+- turn up the thermostat
+- play my workout playlist
+- skip to the next song
+- pause the music
+- video call my brother
+- post this to twitter for me
+- check the traffic on my way to work
+- unlock the front door
+- start the dishwasher
+- turn on the tv
+- give me a recipe for carbonara
+- how do i make chocolate chip cookies
+- what's a good recipe for chicken curry
+- how do i make banana bread
+- how long do i boil an egg
+- how do i make pizza dough from scratch
+- what's a good substitute for buttermilk
+- how do i make guacamole
+- how do i cook rice properly
+- what temperature do i roast a chicken at
+- how do i make a good omelet
+- what wine goes with steak
+- tell me a story about a dragon
+- tell me a joke
+- what should i name my cat
+- sing me a song
+- what's a fun fact
+- recommend me a good book to read
+- what should i watch tonight
+- give me a workout routine
+- help me write a birthday message for my friend
+- what's a good icebreaker for a party
+- recommend a podcast about history
+- give me some tips for public speaking
+- what's a good gift idea for my mom
+- help me plan a trip to italy
+- what should i wear today
+- give me some motivation to go to the gym
+- what's a good name for a band
+- help me come up with a wifi password
+- summarise the news for me
+- what's trending on social media today
+- what's a good movie from the 90s
+- explain quantum physics to me like i'm five
+- why do we dream
+- what's the meaning of my dream last night
+- how do i improve my resume
+- give me advice for a job interview
+- help me write a cover letter
+- what's a good exercise for lower back pain
+- how do i meditate properly
+- what's the best way to fall asleep faster
+- how do stock markets work
+- what's inflation
+- explain how interest rates work
+- what's a good beginner investment
+- how does the electoral college work
+- what's the difference between weather and climate
+- why do leaves change color in autumn
+- how does wifi actually work
+- what's the difference between a virus and bacteria
+- how do noise cancelling headphones work
+- why do we get hiccups
+- what causes a hangover
+- how does the immune system work
+- what's the difference between the sun and a star
+- why does the moon change shape
+- how do earthquakes happen
+- what's a black hole
+- how many stars are in the milky way
+- why is the ocean salty
+- what's the fastest animal on earth
+- how long does it take to fly to the moon
+- what's the oldest known civilization
+- how do plants grow without soil
+- what's a leap year
+- why do we have time zones
+- what's the difference between a hurricane and a typhoon
+- how cold does it get in antarctica
+- what's the tallest mountain underwater
+- how many languages are spoken in the world
+- what's the difference between jam and jelly
+- what's today's top news story
+- what's the exchange rate for euros to dollars
+- how many calories are in a banana
+- what's a good name for a puppy
+- how do i tie a tie
+- what's morse code for sos
+- how do you say hello in japanese
+- what's the tallest man ever recorded
+- who has the most instagram followers
+- what's the highest grossing movie of all time
+- explain the stock market crash of 1929
+- what caused the great depression
+- how do credit scores work
+- what's a good budget for groceries
+- how do i change a tire
+- what's the difference between ac and dc power
+- how does a car engine work
+- what's the boiling point of water
+- why is glass transparent
+- what's the periodic table
+- how many elements are in the periodic table
+- what's dark matter
+- how do satellites stay in orbit
+- what's the theory of relativity
+- how do magnets work
+- why does ice float
+- what's the freezing point of water
+- how far is the sun from earth
+- what's a light year
+- how long is a day on mars
+- who won the last world series
+- who's leading the premier league
+- when's the next olympics
+- who won the champions league final
+- who's the highest paid athlete
+- what's the highest scoring nba game ever
+- who won best picture at the oscars
+- what's the highest grossing video game
+- who's the best chess player of all time
+- when does the new season of that show come out
+- who's in the new marvel movie
+- what's a good tv show to binge
+- who wrote the harry potter books
+- what band sings that song on the radio
+- who's touring near me this year
+- what's the plot of inception
+- who directed pulp fiction
+- what's the highest rated show on television
+- who won the grammy for album of the year
+- what's a good album to listen to
+- what's the largest desert in the world
+- what's the smallest continent
+- how many countries are in africa
+- what's the longest wall ever built
+- who built the great wall of china
+- what caused world war one
+- when did the berlin wall fall
+- who was alexander the great
+- what's the oldest university in the world
+- how did ancient egyptians build the pyramids
+- what's the driest place on earth
+- what's the wettest place on earth
+- how many time zones does russia have
+- what's the most spoken language in the world
+- what's the currency of japan
+- what's the currency used in the uk
+- how many us states are there
+- what's the smallest us state
+- what's the largest us state
+- who founded rome
+- what's the difference between mass and weight
+- how do rockets work
+- why do we age
+- what's cellular respiration
+- how does the brain store memories
+- what's an ecosystem
+- how do antibiotics work
+- why do onions make you cry
+- what's the difference between a comet and an asteroid
+- how do we know the earth is round
+- what's the theory of evolution
+- how does photosynthesis work
+- what's a supernova
+- how big is the sun compared to earth
+- what's the closest star to earth
+- how does an eclipse happen
+- what's the greenhouse effect
+- why is co2 a problem for the climate
+- how does solar power work
+- what's renewable energy
+- how do batteries store energy
+- what's nuclear fusion
+- how does gps figure out my location
+- what's the difference between hardware and software
+- how does the internet actually work
+- how do i whiten my teeth
+- what's a good skincare routine
+- how do i get rid of a headache
+- what's a good stretch for sore legs
+- how much water should i drink a day
+- how many hours of sleep do i need
+- what's a good breakfast idea
+- how do i lower my cholesterol
+- what's a good workout for beginners
+- how do i start running
+- what's intermittent fasting
+- how do i stop procrastinating
+- how do i improve my focus
+- what's a good morning routine
+- how do i save money each month
+- what's a good way to budget
+- how do i negotiate a salary
+- what's a good side hustle idea
+- how do i start investing
+- what's compound interest
+- how do i build credit
+- what's a 401k
+- how do i file my taxes
+- what's the difference between a roth and traditional ira
+- how do i write a resignation letter
+- how do i ask for a raise
+- what's the loudest animal on earth
+- what's the fastest land animal
+- how long can a human hold their breath
+- what's the tallest tree in the world
+- how many teeth does a shark have
+- what's the smallest bird in the world
+- how many hearts does an octopus have
+- what animal sleeps the most
+- what's the largest mammal
+- how fast can a cheetah run
+- what's the most poisonous animal
+- how long do tortoises live
+- what's the strongest material on earth
+- what's the rarest element
+- how hot is the surface of the sun
+- how cold is outer space
+- what's the deepest lake in the world
+- what's the biggest waterfall
+- how many muscles are in the human face
+- what's the largest desert on earth
+- can you order groceries for me
+- can you book a flight for me
+- can you check my calendar and email it to my boss
+- can you find me a plumber nearby
+- can you compare prices for a laptop
+- can you set an alarm for tomorrow morning
+- can you turn down the volume on the tv
+- can you stream a movie for me
+- can you connect to my bluetooth speaker
+- can you print this document
+- can you scan this receipt
+- can you back up my photos
+- can you find my phone
+- can you charge my car
+- can you start my car remotely
+- can you check the mail
+- can you feed the dog
+- can you water the garden
+- can you turn on the sprinklers
+- can you check the security cameras

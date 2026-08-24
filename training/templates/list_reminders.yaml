@@ -1,0 +1,29 @@
+intent: list_reminders
+slots:
+  day:
+  - today
+  - tomorrow
+  - this week
+  - friday
+  - coming up
+  - this afternoon
+  - right now
+  - ''
+patterns:
+- what are my reminders {day}
+- what reminders do i have {day}
+- do i have any reminders {day}
+- read out my reminders {day}
+- what's on my reminder list {day}
+- any reminders for {day}
+- list my reminders {day}
+- show me my reminders {day}
+- what reminders are coming up {day}
+- what have i got reminders for {day}
+- read me my reminder list {day}
+- any upcoming reminders {day}
+- what am i supposed to remember {day}
+- what reminders do i have set {day}
+- pull up my reminders {day}
+- run through my reminders {day}
+- what's still on my reminder list {day}

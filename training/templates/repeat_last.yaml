@@ -1,0 +1,26 @@
+intent: repeat_last
+slots:
+  hedge:
+  - ''
+  - please
+  - jarvis
+  - sorry
+  - one more time
+  - for me
+  - again
+  - slower
+patterns:
+- say that again {hedge}
+- can you repeat that {hedge}
+- what did you say {hedge}
+- repeat that {hedge}
+- come again {hedge}
+- i didn't catch that {hedge}
+- say it again {hedge}
+- what was that {hedge}
+- run that by me again {hedge}
+- could you say that again {hedge}
+- i missed that can you repeat {hedge}
+- what did you just say {hedge}
+- can you say that one more time {hedge}
+- i didn't hear you {hedge}

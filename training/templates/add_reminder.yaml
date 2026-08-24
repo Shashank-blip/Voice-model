@@ -1,0 +1,57 @@
+intent: add_reminder
+slots:
+  task:
+  - call mom
+  - pay the rent
+  - take the bread out
+  - email priya
+  - book the dentist
+  - water the plants
+  - submit the timesheet
+  - pick up the parcel
+  - say hi to Alex
+  - feed the cat
+  - walk the dog
+  - call the plumber
+  - buy milk
+  - charge my phone
+  - take my pills
+  - book the flight
+  - follow up with the team
+  - review the contract
+  - return the library books
+  - text my sister
+  time:
+  - at 6
+  - at 6 pm
+  - tomorrow at 9
+  - tonight at 8
+  - in 20 minutes
+  - on friday at 4
+  - tomorrow morning
+  - in two hours
+  - at noon
+  - in an hour
+  - next monday at 10
+  - in five minutes
+  - at 7 in the morning
+  - tomorrow at 6 pm
+  - this evening
+patterns:
+- remind me to {task} {time}
+- remind me {time} to {task}
+- can you remind me to {task} {time}
+- set a reminder to {task} {time}
+- set a reminder for {task} {time}
+- don't let me forget to {task} {time}
+- nudge me to {task} {time}
+- remind me about {task} {time}
+- i need a reminder to {task} {time}
+- make sure i {task} {time}
+- give me a nudge to {task} {time}
+- remember to remind me to {task} {time}
+- hey can you remind me to {task} {time}
+- ping me to {task} {time}
+- i need to {task} {time}, remind me
+- remind me to call mom at 6 pm
+- remind me to say hi to Alex tomorrow at 6 pm

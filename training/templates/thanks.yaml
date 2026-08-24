@@ -1,0 +1,26 @@
+intent: thanks
+slots:
+  hedge:
+  - ''
+  - jarvis
+  - so much
+  - a lot
+  - buddy
+  - for that
+  - man
+  - seriously
+patterns:
+- thanks {hedge}
+- thank you {hedge}
+- appreciate it {hedge}
+- much appreciated {hedge}
+- cheers {hedge}
+- nice one {hedge}
+- you're a lifesaver {hedge}
+- thanks a ton {hedge}
+- i appreciate you {hedge}
+- thanks for the help {hedge}
+- couldn't have done it without you {hedge}
+- thank you kindly {hedge}
+- big thanks {hedge}
+- thanks so much {hedge}

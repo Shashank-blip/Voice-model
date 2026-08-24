@@ -1,0 +1,34 @@
+intent: search_notes
+slots:
+  topic:
+  - the wifi
+  - mom's birthday
+  - the meeting
+  - the recipe
+  - the gate code
+  - the new address
+  - the flight
+  - the project deadline
+  - the client
+  - the password
+  - the appointment
+  - the car
+  - the invoice
+  - the router
+  - the electrician
+patterns:
+- what did i note about {topic}
+- search my notes for {topic}
+- find my note about {topic}
+- what did i write about {topic}
+- do i have a note about {topic}
+- look up my note on {topic}
+- what does my note say about {topic}
+- find the note about {topic}
+- search notes for {topic}
+- what was that note about {topic}
+- pull up my note about {topic}
+- what did i save about {topic}
+- check my notes for {topic}
+- did i write anything about {topic}
+- what did I note about the wifi

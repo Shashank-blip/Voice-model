@@ -1,0 +1,27 @@
+intent: how_are_you
+slots:
+  hedge:
+  - ''
+  - jarvis
+  - today
+  - buddy
+  - these days
+  - right now
+  - so far
+  - this week
+patterns:
+- how are you {hedge}
+- how are you doing {hedge}
+- how's it going {hedge}
+- how have you been {hedge}
+- how are you feeling {hedge}
+- you doing okay {hedge}
+- everything okay with you {hedge}
+- how's your day going {hedge}
+- you good {hedge}
+- how are things {hedge}
+- how are you holding up {hedge}
+- what's going on with you {hedge}
+- how's everything {hedge}
+- you alright {hedge}
+- is everything alright with you {hedge}
