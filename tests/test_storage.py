@@ -109,7 +109,6 @@ def test_add_note_uses_injected_now_for_created_at(store):
     assert store.list_notes()[0].created_at == injected
 
 
-@pytest.mark.xfail(reason="needs Task 3 slots")
 def test_migrates_legacy_minutes_schema(tmp_path):
     """miss-minutes' existing db has free-text `due` and no events table."""
     import sqlite3
