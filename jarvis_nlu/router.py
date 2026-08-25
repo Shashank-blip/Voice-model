@@ -15,6 +15,7 @@ from jarvis_nlu.model import Classifier, Thresholds
 from jarvis_nlu.responses import ResponsePool
 from jarvis_nlu.skills import calendar, clock, notes, reminders, smalltalk
 from jarvis_nlu.storage import Storage
+from jarvis_nlu.turnlog import TurnLogger
 
 log = logging.getLogger(__name__)
 
@@ -42,13 +43,18 @@ DEFERRED = Result(handled=False, reply=None,
 class Assistant:
     def __init__(self, config: Config, storage: Storage, classifier: Classifier,
                  thresholds: Thresholds, pool: ResponsePool | None = None,
-                 embedder: Callable[[str], bytes] | None = None):
+                 embedder: Callable[[str], bytes] | None = None,
+                 logger: TurnLogger | None = None):
         self.config = config
         self.storage = storage
         self.classifier = classifier
         self.thresholds = thresholds
         self.pool = pool or ResponsePool()
         self.embedder = embedder
+        # Task B. Optional so every existing caller/test that builds an
+        # Assistant without a logger is unaffected. When set, every turn
+        # is appended to the learning log -- see jarvis_nlu/turnlog.py.
+        self.logger = logger
         self.last_reply: str | None = None
         # Held for the duration of a turn so the proactive scheduler never
         # speaks over the user mid-exchange.
@@ -60,6 +66,11 @@ class Assistant:
         # climbs past 1 and, since it is only ever incremented from 0 or
         # reset to 0, it can never go negative either.
         self._consecutive_unsure = 0
+        # Set within one handle() call by _dispatch/_resolve_pending so the
+        # end-of-turn log entry can carry signals that only those inner
+        # steps know about (a skill exception, what a pending confirmation
+        # was answered). Reset at the top of every handle() call.
+        self._turn_meta: dict = {}
 
     def handle(self, text: str, now: datetime | None = None) -> Result:
         now = now or datetime.now()
@@ -68,32 +79,61 @@ class Assistant:
             return DEFERRED
 
         with self.turn_lock:
-            intent_value, confidence = self.classifier.classify(text)
+            self._turn_meta = {}
+            result = self._classify_and_route(text, now)
+            self._log_turn(text, result, now)
+        return result
 
-            # Below defer: the model is merely unsure, most often a garbled
-            # transcript rather than a genuinely out-of-scope request. The
-            # two-strike policy handles this BEFORE the out-of-scope check
-            # below, since it applies regardless of predicted intent.
-            if confidence < self.thresholds.defer:
-                return self._handle_low_confidence(intent_value, confidence)
+    def _classify_and_route(self, text: str, now: datetime) -> Result:
+        intent_value, confidence = self.classifier.classify(text)
 
-            # Confidently predicted out-of-scope: this genuinely needs the
-            # LLM, immediately -- no re-prompt, no strike bookkeeping.
-            if intent_value == Intent.OUT_OF_SCOPE.value:
-                return Result(handled=False, reply=None,
-                              intent=intent_value, confidence=confidence)
+        # Below defer: the model is merely unsure, most often a garbled
+        # transcript rather than a genuinely out-of-scope request. The
+        # two-strike policy handles this BEFORE the out-of-scope check
+        # below, since it applies regardless of predicted intent.
+        if confidence < self.thresholds.defer:
+            return self._handle_low_confidence(intent_value, confidence)
 
-            if self._pending and intent_value in (Intent.AFFIRM.value, Intent.DENY.value):
-                return self._resolve_pending(intent_value, confidence, now)
+        # Confidently predicted out-of-scope: this genuinely needs the
+        # LLM, immediately -- no re-prompt, no strike bookkeeping.
+        if intent_value == Intent.OUT_OF_SCOPE.value:
+            return Result(handled=False, reply=None,
+                          intent=intent_value, confidence=confidence)
 
-            # A destructive intent we are merely probable about asks first.
-            if (intent_value in {i.value for i in DESTRUCTIVE_INTENTS}
-                    and confidence < self.thresholds.confirm):
-                self._pending = (intent_value, text)
-                return self._reply(f"Just to be sure, sugar — you want me to {text}?",
-                                   intent_value, confidence, needs_confirmation=True)
+        if self._pending and intent_value in (Intent.AFFIRM.value, Intent.DENY.value):
+            return self._resolve_pending(intent_value, confidence, now)
 
-            return self._dispatch(intent_value, text, confidence, now)
+        # A destructive intent we are merely probable about asks first.
+        if (intent_value in {i.value for i in DESTRUCTIVE_INTENTS}
+                and confidence < self.thresholds.confirm):
+            self._pending = (intent_value, text)
+            return self._reply(f"Just to be sure, sugar — you want me to {text}?",
+                               intent_value, confidence, needs_confirmation=True)
+
+        return self._dispatch(intent_value, text, confidence, now)
+
+    def _log_turn(self, text: str, result: Result, now: datetime) -> None:
+        # A logging fault must never break a spoken turn -- this call site
+        # is the outermost guard; TurnLogger itself also guards its own
+        # disk I/O, but we do not rely on that alone (a test/patch could
+        # make the logger's `log` method itself raise).
+        if self.logger is None:
+            return
+        try:
+            self.logger.log(
+                text=text,
+                predicted_intent=result.intent,
+                confidence=result.confidence,
+                now=now,
+                handled=result.handled,
+                reprompt=result.reprompt,
+                needs_confirmation=result.needs_confirmation,
+                resolved_answer=self._turn_meta.get("resolved_answer"),
+                skill_error=self._turn_meta.get("skill_error"),
+                slots=result.slots,
+            )
+        except Exception:
+            log.warning("failed to log turn", exc_info=True)
 
     def _handle_low_confidence(self, intent_value: str, confidence: float) -> Result:
         """Task F two-strike policy. First consecutive below-`defer` turn:
@@ -115,6 +155,9 @@ class Assistant:
     def _resolve_pending(self, answer: str, confidence: float, now: datetime) -> Result:
         pending_intent, pending_text = self._pending
         self._pending = None
+        # Task B signal: what the user answered a confirmation prompt with,
+        # attached to this (the resolving) turn's log entry.
+        self._turn_meta["resolved_answer"] = answer
         if answer == Intent.DENY.value:
             return self._reply(self.pool.pick("deny"), answer, confidence)
         return self._dispatch(pending_intent, pending_text, confidence, now)
@@ -136,9 +179,12 @@ class Assistant:
                   now: datetime) -> Result:
         try:
             reply = self._run_skill(intent_value, text, now)
-        except Exception:
+        except Exception as exc:
             # A skill fault must never kill the assistant.
             log.exception("skill %s failed on %r", intent_value, text)
+            # Task B signal: the skill raised, attached to this turn's log
+            # entry so a reviewer can see it without reproducing the crash.
+            self._turn_meta["skill_error"] = f"{type(exc).__name__}: {exc}"
             return self._reply(self.pool.pick("unknown_error"), intent_value, confidence)
         return self._reply(reply, intent_value, confidence)
 
