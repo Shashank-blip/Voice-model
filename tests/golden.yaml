@@ -31,3 +31,5 @@
   intent: get_time
 - text: what's the date
   intent: get_date
+- text: what all do i gotta do today
+  intent: list_reminders          # regression: matched query_calendar at 0.98
