@@ -18,11 +18,16 @@ def build(scripted, tmp_path):
                      classifier=FakeClassifier(scripted), thresholds=THRESHOLDS)
 
 
-def test_low_confidence_defers_to_the_llm(tmp_path):
+def test_low_confidence_first_strike_reprompts_rather_than_deferring(tmp_path):
+    """Task F two-strike policy: below `defer`, the FIRST consecutive
+    low-confidence turn is a free local re-prompt, not an LLM deferral --
+    see tests/test_two_strike.py for the full two-strike behaviour."""
+    from jarvis_nlu.responses import POOLS
     a = build({"who won the world cup": ("out_of_scope", 0.2)}, tmp_path)
     result = a.handle("who won the world cup", NOW)
-    assert result.handled is False
-    assert result.reply is None
+    assert result.handled is True
+    assert result.reprompt is True
+    assert result.reply in POOLS["reprompt"]
 
 
 def test_out_of_scope_defers_even_when_confident(tmp_path):
