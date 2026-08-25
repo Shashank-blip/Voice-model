@@ -75,15 +75,25 @@ def main() -> None:
     # just distinct weights from the classification head.
     bare_encoder = AutoModel.from_pretrained(BASE_MODEL)
     bare_encoder.eval()
+    encoder_fp32 = models_dir / "encoder.fp32.onnx"
     torch.onnx.export(
         _Encoder(bare_encoder), (dummy["input_ids"], dummy["attention_mask"]),
-        models_dir / "encoder.onnx",
+        encoder_fp32,
         input_names=["input_ids", "attention_mask"], output_names=["hidden"],
         dynamic_axes={"input_ids": {0: "batch", 1: "seq"},
                       "attention_mask": {0: "batch", 1: "seq"},
                       "hidden": {0: "batch", 1: "seq"}},
         opset_version=17,
         dynamo=False)
+
+    # Same int8 dynamic quantization as the classifier above. Verified by
+    # task-13 measurement (see task-13-report.md) that this does not degrade
+    # retrieval ranking on the probed query/note pairs before shipping it;
+    # if a future re-verification finds int8 breaks a related pair's ranking
+    # or its score relative to the SIMILARITY_FLOOR, revert this call and
+    # export encoder_fp32 to models_dir / "encoder.onnx" directly instead.
+    quantize_dynamic(encoder_fp32, models_dir / "encoder.onnx", weight_type=QuantType.QInt8)
+    encoder_fp32.unlink()
     encoder_size_mb = (models_dir / "encoder.onnx").stat().st_size / 1e6
     print(f"exported models/encoder.onnx ({encoder_size_mb:.1f} MB)")
 

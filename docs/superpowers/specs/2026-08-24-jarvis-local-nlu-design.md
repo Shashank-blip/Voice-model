@@ -154,6 +154,10 @@ Cross-entropy with class weights to offset intent frequency imbalance.
 
 Exported to ONNX and int8-quantized: **~23MB, p95 under 25ms on CPU.**
 
+That figure is the classifier alone. Semantic search (§7.2) requires a second,
+separately-exported MiniLM encoder, also int8-quantized, ~22MB -- total on-disk
+model footprint is **~45MB**, not ~23MB.
+
 ### 5.3 Confidence and deferral
 
 Raw softmax is overconfident. Temperature scaling is fitted on the validation
@@ -229,11 +233,19 @@ afterthought.
 
 ### 7.2 Semantic note search
 
-The MiniLM encoder is already resident for classification, so `search_notes`
-embeds note text at write time and retrieves by cosine similarity at query time.
-*"What did I note about the wifi"* works without keyword overlap. This is the
-retrieval capability the folder name refers to, at near-zero marginal cost —
-no vector database, embeddings stored as a BLOB column.
+`search_notes` embeds note text at write time and retrieves by cosine similarity
+at query time, using a **second, separately-exported MiniLM checkpoint**
+(`encoder.onnx`, int8-quantized, ~22MB) -- not the classification-fine-tuned
+encoder. Measurement during implementation found that fine-tuning end-to-end
+on the 20-way intent objective (§5.2) collapses the base checkpoint's
+contrastively-trained sentence-embedding geometry: an unrelated sentence pair
+scored a higher mean-pooled cosine similarity than a genuinely related one.
+A fresh, never-fine-tuned copy of the same base checkpoint keeps that geometry
+intact and is what is exported and shipped. *"What did I note about the wifi"*
+still works without keyword overlap, and embeddings are still stored as a BLOB
+column with no vector database -- but this is a second resident ONNX model,
+not a free reuse of the classifier's encoder, so the marginal cost is a second
+~22MB artifact and a second inference session, not near-zero.
 
 ## 8. Storage
 
