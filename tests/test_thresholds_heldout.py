@@ -148,3 +148,51 @@ def test_fit_thresholds_main_rewrites_only_the_thresholds_block(tmp_path, monkey
     assert after["thresholds"] != before["thresholds"]
     for key in ("labels", "base_model", "max_length", "temperature", "seed"):
         assert after[key] == before[key]
+
+
+def test_constrained_defer_keeps_held_out_reprompt_rate_within_budget(classifier):
+    """The re-prompt rate under the two-strike policy (Task F) has no term
+    in the cost function -- it prices a deferral purely as a wrong-answer
+    avoided, never as user patience spent. The constrained selection must
+    keep the held-out in-scope re-prompt rate at or under MAX_REPROMPT_RATE."""
+    from training.fit_thresholds import (
+        MAX_REPROMPT_RATE, reprompt_rate_in_scope, score_heldout,
+        choose_thresholds_constrained,
+    )
+
+    probabilities, labels = score_heldout(classifier)
+    thresholds = choose_thresholds_constrained(probabilities, labels)
+    rate = reprompt_rate_in_scope(probabilities, labels, thresholds["defer"])
+    assert rate <= MAX_REPROMPT_RATE + 1e-9
+
+
+def test_constrained_defer_still_keeps_confirm_band_non_empty(classifier):
+    from training.fit_thresholds import choose_thresholds_constrained, score_heldout
+
+    probabilities, labels = score_heldout(classifier)
+    thresholds = choose_thresholds_constrained(probabilities, labels)
+    assert thresholds["confirm"] > thresholds["defer"]
+
+
+def test_unsatisfiable_constraint_falls_back_to_unconstrained_argmin_with_a_warning(
+        classifier, capsys):
+    """A negative budget can never be satisfied by any rate (rates are
+    always >= 0), so this deterministically forces the empty-feasible-set
+    path regardless of what the held-out data happens to look like near
+    zero confidence -- unlike an arbitrarily small positive budget, which
+    could still be met if very few examples score that low. Must fall back
+    to the plain cost argmin, and must say so loudly, never silently
+    ignore the constraint."""
+    from training.fit_thresholds import choose_thresholds_constrained, score_heldout
+    from training.train import _choose_thresholds
+
+    probabilities, labels = score_heldout(classifier)
+    unconstrained = _choose_thresholds(probabilities, labels)
+
+    fallback = choose_thresholds_constrained(
+        probabilities, labels, max_reprompt_rate=-0.01)
+    captured = capsys.readouterr()
+
+    assert fallback == unconstrained
+    assert "warning" in captured.out.lower()
+    assert "re-prompt" in captured.out.lower() or "reprompt" in captured.out.lower()

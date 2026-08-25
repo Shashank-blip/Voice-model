@@ -191,7 +191,8 @@ CANDIDATE_THRESHOLDS = np.arange(0.10, 0.95, 0.01)
 CONFIRM_MARGIN = 0.10
 
 
-def _choose_thresholds(probabilities: np.ndarray, labels: np.ndarray) -> dict:
+def _choose_thresholds(probabilities: np.ndarray, labels: np.ndarray,
+                       candidate_thresholds: np.ndarray | None = None) -> dict:
     """Choose tau_defer by minimising an explicit expected-cost objective.
     The caller MUST pass a held-out split the model's confidence was not
     calibrated on (the TEST split -- never the split temperature was fitted
@@ -223,6 +224,16 @@ def _choose_thresholds(probabilities: np.ndarray, labels: np.ndarray) -> dict:
     intents execute without ever asking. So tau_confirm is additionally
     floored at tau_defer + CONFIRM_MARGIN (see that constant) and capped at
     0.99.
+
+    `candidate_thresholds` restricts ONLY the tau_defer search below to a
+    caller-supplied subset of CANDIDATE_THRESHOLDS (e.g. training/fit_thresholds.py
+    passing only the taus that keep the held-out re-prompt rate under
+    MAX_REPROMPT_RATE) -- the cost FORMULA is unchanged, only which taus are
+    considered. Defaults to the full CANDIDATE_THRESHOLDS range, matching prior
+    behaviour exactly. tau_confirm's precision search always scans the full
+    range regardless -- it answers a different question (is a locally-answered
+    prediction trustworthy enough not to ask?) that a re-prompt-rate budget has
+    no bearing on.
     """
     out_of_scope_index = LABELS.index("out_of_scope")
     predicted = probabilities.argmax(axis=1)
@@ -231,8 +242,10 @@ def _choose_thresholds(probabilities: np.ndarray, labels: np.ndarray) -> dict:
     out_of_scope = ~in_scope
     n_total = max(len(labels), 1)
 
-    best_tau, best_cost = float(CANDIDATE_THRESHOLDS[0]), float("inf")
-    for tau in CANDIDATE_THRESHOLDS:
+    defer_candidates = (CANDIDATE_THRESHOLDS if candidate_thresholds is None
+                        else candidate_thresholds)
+    best_tau, best_cost = float(defer_candidates[0]), float("inf")
+    for tau in defer_candidates:
         answered = confidence >= tau
         wrong_in_scope = in_scope & answered & (predicted != labels)
         wrong_oos = out_of_scope & answered & (predicted != out_of_scope_index)

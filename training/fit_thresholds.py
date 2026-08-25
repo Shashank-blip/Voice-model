@@ -33,11 +33,22 @@ if str(_ROOT_FOR_IMPORTS) not in sys.path:
 import numpy as np
 
 from training.evaluate import load_heldout
-from training.train import LABELS, MISCLASSIFY_COST, _choose_thresholds
+from training.train import CANDIDATE_THRESHOLDS, LABELS, MISCLASSIFY_COST, _choose_thresholds
 
 ROOT = Path(__file__).parent.parent
 MODEL_DIR = ROOT / "models"
 MANIFEST_PATH = MODEL_DIR / "manifest.json"
+
+# The cost function _choose_thresholds minimises prices a deferral purely as
+# a wrong-answer-avoided (1.0 per deferral vs. MISCLASSIFY_COST for a
+# confidently wrong answer) -- it has no term for user patience. Under Task
+# F's two-strike policy a deferral below `defer` is cheap in money (a free
+# local re-prompt, not an API call) but NOT free in patience: an assistant
+# that says "say that again, sugar?" to a third or more of everything you
+# say stops feeling reliable, however good that threshold looks on the cost
+# curve alone. 0.30 is the line: below it the assistant re-prompts
+# occasionally; above it, re-prompting becomes the dominant experience.
+MAX_REPROMPT_RATE = 0.30
 
 
 def _probabilities_from_predictions(rows: list[tuple[int, float]],
@@ -68,6 +79,82 @@ def score_heldout(classifier) -> tuple[np.ndarray, np.ndarray]:
         label_indices.append(LABELS.index(example.intent))
     probabilities = _probabilities_from_predictions(rows, len(LABELS))
     return probabilities, np.array(label_indices)
+
+
+def reprompt_rate_in_scope(probabilities: np.ndarray, labels: np.ndarray, defer: float) -> float:
+    """Fraction of actual in-scope held-out examples that fall below
+    `defer` -- i.e. the share of genuine (non-out-of-scope) requests that
+    the two-strike policy would re-prompt on first strike. This is the
+    quantity MAX_REPROMPT_RATE budgets: it deliberately excludes actual
+    out-of-scope examples, since a low-confidence out-of-scope utterance
+    was never answerable by lowering `defer` further -- it would only leak
+    (see `rates_at`'s `leak_rate`), not get handled."""
+    out_of_scope_index = LABELS.index("out_of_scope")
+    confidence = probabilities.max(axis=1)
+    in_scope = labels != out_of_scope_index
+    n_in_scope = in_scope.sum()
+    if not n_in_scope:
+        return 0.0
+    below = in_scope & (confidence < defer)
+    return float(below.sum() / n_in_scope)
+
+
+def choose_thresholds_constrained(
+        probabilities: np.ndarray, labels: np.ndarray,
+        max_reprompt_rate: float = MAX_REPROMPT_RATE) -> dict:
+    """Task F fix: `_choose_thresholds`'s cost minimisation, constrained to
+    only consider candidate `defer` values whose held-out in-scope
+    re-prompt rate is at or under `max_reprompt_rate`. Reuses
+    `_choose_thresholds` unchanged (via its `candidate_thresholds`
+    parameter) rather than duplicating the cost formula -- only the
+    candidate SET shrinks, the objective does not change.
+
+    If no candidate threshold satisfies the constraint (which can only
+    happen with a pathologically low `max_reprompt_rate`, or a model whose
+    confidence never separates in-scope from out-of-scope), falls back to
+    the plain unconstrained argmin and prints a loud warning -- the
+    constraint is never silently dropped."""
+    feasible = np.array([
+        tau for tau in CANDIDATE_THRESHOLDS
+        if reprompt_rate_in_scope(probabilities, labels, tau) <= max_reprompt_rate
+    ])
+    if len(feasible) == 0:
+        print(f"WARNING: no candidate defer threshold keeps the held-out "
+              f"in-scope re-prompt rate at or under {max_reprompt_rate:.1%} "
+              f"-- falling back to the UNCONSTRAINED cost argmin (the "
+              f"re-prompt-rate budget could not be satisfied and is being "
+              f"ignored, not silently dropped).")
+        return _choose_thresholds(probabilities, labels)
+    return _choose_thresholds(probabilities, labels, candidate_thresholds=feasible)
+
+
+def trade_off_table(probabilities: np.ndarray, labels: np.ndarray,
+                    taus: list[float]) -> dict[float, dict[str, float]]:
+    """The legibility table: for each candidate tau, the re-prompt rate
+    (the new budgeted quantity), the confidently-wrong-in-scope rate (the
+    original cost-function failure), and the out-of-scope-LLM rate (share
+    of ALL held-out turns that escalate immediately as confident
+    out-of-scope) -- so a human can see the whole trade before moving the
+    knob."""
+    out_of_scope_index = LABELS.index("out_of_scope")
+    predicted = probabilities.argmax(axis=1)
+    confidence = probabilities.max(axis=1)
+    in_scope = labels != out_of_scope_index
+    n_total = max(len(labels), 1)
+    n_in_scope = in_scope.sum()
+
+    table = {}
+    for tau in taus:
+        answered = confidence >= tau
+        confidently_wrong = (in_scope & answered & (predicted != labels)).sum()
+        out_of_scope_llm = ((predicted == out_of_scope_index) & answered).sum()
+        table[tau] = {
+            "reprompt_rate": reprompt_rate_in_scope(probabilities, labels, tau),
+            "confidently_wrong_rate": (confidently_wrong / n_in_scope
+                                       if n_in_scope else 0.0),
+            "out_of_scope_llm_rate": out_of_scope_llm / n_total,
+        }
+    return table
 
 
 def rates_at(probabilities: np.ndarray, labels: np.ndarray, defer: float) -> dict[str, float]:
@@ -124,7 +211,11 @@ def main() -> None:
 
     classifier = OnnxClassifier(MODEL_DIR)
     probabilities, labels = score_heldout(classifier)
-    after = _choose_thresholds(probabilities, labels)
+    # Constrained, not the raw cost argmin: see MAX_REPROMPT_RATE's comment
+    # -- the cost function alone has no term for user patience and, left
+    # unconstrained, picks a defer so high that ~44% of turns get
+    # re-prompted.
+    after = choose_thresholds_constrained(probabilities, labels)
 
     # _choose_thresholds floors confirm at defer + CONFIRM_MARGIN but caps it
     # at 0.99, so that margin is not guaranteed when defer itself lands
@@ -142,22 +233,39 @@ def main() -> None:
     before_rates = rates_at(probabilities, labels, before["defer"])
     after_rates = rates_at(probabilities, labels, after["defer"])
     after_split = policy_split(probabilities, after["defer"])
+    after_reprompt_rate = reprompt_rate_in_scope(probabilities, labels, after["defer"])
 
     print(f"MISCLASSIFY_COST = {MISCLASSIFY_COST}  (tunable -- higher penalises a "
           f"confidently-wrong local answer more, and pushes defer up)")
+    print(f"MAX_REPROMPT_RATE = {MAX_REPROMPT_RATE:.0%}  (tunable -- a budget on held-out "
+          f"in-scope re-prompt rate; the constraint the cost function alone ignores)")
     print()
     print(f"before (template-split fit): defer={before['defer']} confirm={before['confirm']}")
     print(f"  on held-out: deferral={before_rates['deferral_rate']:.1%} "
           f"confidently_wrong={before_rates['confidently_wrong_rate']:.1%} "
           f"leak={before_rates['leak_rate']:.1%}")
     print()
-    print(f"after (held-out cost-argmin): defer={after['defer']} confirm={after['confirm']}")
+    print(f"after (held-out, constrained cost-argmin): "
+          f"defer={after['defer']} confirm={after['confirm']}")
     print(f"  on held-out: deferral={after_rates['deferral_rate']:.1%} "
           f"confidently_wrong={after_rates['confidently_wrong_rate']:.1%} "
-          f"leak={after_rates['leak_rate']:.1%}")
+          f"leak={after_rates['leak_rate']:.1%} "
+          f"reprompt_rate_in_scope={after_reprompt_rate:.1%}")
     print(f"  router policy split: handled_locally={after_split['handled_locally']:.1%} "
           f"confident_out_of_scope={after_split['confident_out_of_scope']:.1%} "
           f"unsure={after_split['unsure']:.1%}")
+    print()
+    print("Trade-off table (held-out):")
+    print(f"  {'defer':>7} {'reprompt_rate':>14} {'confidently_wrong':>18} "
+          f"{'out_of_scope_llm':>17}")
+    report_taus = sorted({0.70, 0.75, 0.80, 0.83, 0.85, 0.90, 0.93, after["defer"]})
+    table = trade_off_table(probabilities, labels, report_taus)
+    for tau in report_taus:
+        row = table[tau]
+        marker = "  <- chosen" if abs(tau - after["defer"]) < 1e-9 else ""
+        print(f"  {tau:>7.2f} {row['reprompt_rate']:>14.1%} "
+              f"{row['confidently_wrong_rate']:>18.1%} "
+              f"{row['out_of_scope_llm_rate']:>17.1%}{marker}")
     print()
     print(f"wrote {MANIFEST_PATH}")
 
