@@ -1,0 +1,33 @@
+# Every bug fixed from here on adds a row.
+- text: what is on my calendar today
+  intent: query_calendar          # regression: matched add_calendar_event
+- text: what's on my calendar
+  intent: query_calendar
+- text: remind me I'm meeting Bob tomorrow at 5 pm
+  intent: add_reminder            # regression: matched greeting
+- text: remind me to say hi to Alex tomorrow at 6 pm
+  intent: add_reminder            # regression: matched greeting
+- text: remind me to call mom at 6 pm
+  intent: add_reminder            # regression: rejected for lacking a day
+- text: who won the world cup
+  intent: out_of_scope
+- text: explain recursion to me
+  intent: out_of_scope
+- text: hey there
+  intent: greeting
+- text: how are you doing
+  intent: how_are_you
+- text: take a note buy milk
+  intent: add_note
+- text: what did I note about the wifi
+  intent: search_notes
+- text: read me my reminders
+  intent: list_reminders
+- text: cancel the mom reminder
+  intent: cancel_reminder
+- text: add dentist appointment tomorrow at 4 pm to my calendar
+  intent: add_calendar_event
+- text: what time is it
+  intent: get_time
+- text: what's the date
+  intent: get_date
