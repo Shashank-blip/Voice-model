@@ -2,19 +2,34 @@
 
 The confusion matrix is a required artifact, not a nicety: shadowing between
 add_calendar_event and query_calendar is exactly the bug class that shipped
-undetected in the regex router, and it appears here as an off-diagonal cell."""
+undetected in the regex router, and it appears here as an off-diagonal cell.
+
+Two evaluation sets are supported:
+
+- The template-derived test split (`grouped_split` over `build_dataset`),
+  the default -- fast, no authoring cost, but every in-scope intent gets
+  exactly 2 template families in the test split, so per-intent recall
+  rests on very few phrasings.
+- `eval/heldout.yaml` (`--heldout`), a hand-written set independent of the
+  generator -- see the file's own header comment for how independence is
+  maintained and verified.
+"""
 from __future__ import annotations
 
+import argparse
 import json
 import sys
 from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
 
+import yaml
+
 from jarvis_nlu.intents import CHORE_INTENTS
 from training.generate import Example, build_dataset
 
 ROOT = Path(__file__).parent.parent
+HELDOUT_PATH = ROOT / "eval" / "heldout.yaml"
 
 GATES = {"macro_f1": 0.95, "max_confusion": 0.02,
          "deferral_rate": 0.05, "leak_rate": 0.02}
@@ -87,6 +102,27 @@ def score(classifier, examples: list[Example], defer_threshold: float = 0.6) -> 
         per_intent=per_intent)
 
 
+def load_heldout(path: Path = HELDOUT_PATH) -> list[Example]:
+    """Load eval/heldout.yaml into Examples. template_id is synthesised as
+    'heldout:<index>' -- unique per row, matching the contract build_dataset
+    documents (grouped_split is not used for this set; every row is scored
+    directly, there is no train/val/test split to assign templates to)."""
+    rows = yaml.safe_load(Path(path).read_text(encoding="utf-8")) or []
+    return [Example(row["text"], row["intent"], f"heldout:{index}")
+            for index, row in enumerate(rows)]
+
+
+def check_heldout_overlap(heldout: list[Example], templates_dir: Path,
+                          learning_log: Path | None = None) -> list[str]:
+    """Return the heldout texts (case-insensitive) that also appear in the
+    generated training corpus. Must be empty -- a leaked eval set measures
+    nothing, since the model has seen those exact strings during training."""
+    generated = build_dataset(templates_dir, learning_log=learning_log)
+    generated_texts = {example.text.strip().lower() for example in generated}
+    return [example.text for example in heldout
+            if example.text.strip().lower() in generated_texts]
+
+
 def deferral_tradeoff(classifier, examples: list[Example],
                       thresholds: list[float]) -> dict[float, dict[str, float]]:
     """For each candidate defer threshold, report the in-scope deferral rate
@@ -119,17 +155,11 @@ def deferral_tradeoff(classifier, examples: list[Example],
     return table
 
 
-def main() -> int:
-    from jarvis_nlu.model import OnnxClassifier
-    from training.train import grouped_split
-
-    manifest = json.loads((ROOT / "models" / "manifest.json").read_text(encoding="utf-8"))
-    defer_threshold = manifest["thresholds"]["defer"]
-    _train, _val, test_rows = grouped_split(
-        build_dataset(ROOT / "training" / "templates"))
-    classifier = OnnxClassifier(ROOT / "models")
-    report = score(classifier, test_rows, defer_threshold)
-
+def _print_report(report: Report, classifier, examples: list[Example],
+                  defer_threshold: float, tradeoff_thresholds: list[float]) -> bool:
+    """Print the per-intent table, confusions, gates and trade-off table
+    shared by both evaluation modes. Returns True iff every gate passed.
+    GATES is never modified here -- gate values are the user's decision."""
     print("\nPer-intent F1")
     for intent, metrics in sorted(report.per_intent.items()):
         print(f"  {intent:22} P={metrics['precision']:.3f} "
@@ -159,21 +189,60 @@ def main() -> int:
     if worst_rate > GATES["max_confusion"]:
         print(f"\n  worst chore confusion: {worst_true} -> {worst_pred} ({worst_rate:.1%})")
 
-    # The deferral_rate gate below assumes defer ~= 0.6; the trained manifest
-    # uses defer = 0.83, chosen by cost-minimisation to trade more deferrals
-    # for fewer confidently-wrong local answers (see training/train.py
-    # MISCLASSIFY_COST). If the gate fails at 0.83, this table is what
-    # decides whether that's the right trade -- do NOT use it to retune the
-    # gate or the shipped threshold.
+    # This table is diagnostic only. It never changes a gate value or the
+    # shipped threshold -- it exists so a human can see the trade being made
+    # at each candidate defer threshold before deciding whether GATES or
+    # models/manifest.json's thresholds.defer should change.
     print("\nDeferral / confidently-wrong trade-off by threshold")
     print(f"  {'threshold':>10} {'deferral_rate':>15} {'confidently_wrong_rate':>24}")
-    tradeoff = deferral_tradeoff(classifier, test_rows, [0.5, 0.6, 0.7, defer_threshold])
+    tradeoff = deferral_tradeoff(classifier, examples, tradeoff_thresholds)
     for threshold in sorted(tradeoff):
         row = tradeoff[threshold]
         print(f"  {threshold:>10.2f} {row['deferral_rate']:>15.1%} "
               f"{row['confidently_wrong_rate']:>24.1%}")
 
-    return 1 if failed else 0
+    return not failed
+
+
+def main() -> int:
+    from jarvis_nlu.model import OnnxClassifier
+    from training.train import grouped_split
+
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--heldout", action="store_true",
+        help="Score against the hand-written eval/heldout.yaml set instead "
+             "of the template-derived grouped_split test split.")
+    args = parser.parse_args()
+
+    manifest = json.loads((ROOT / "models" / "manifest.json").read_text(encoding="utf-8"))
+    defer_threshold = manifest["thresholds"]["defer"]
+    classifier = OnnxClassifier(ROOT / "models")
+
+    if args.heldout:
+        print(f"Mode: held-out set ({HELDOUT_PATH})")
+        examples = load_heldout()
+        overlap = check_heldout_overlap(examples, ROOT / "training" / "templates")
+        print(f"Held-out size: {len(examples)}")
+        print(f"Overlap with generated training corpus: {len(overlap)} "
+              f"(must be 0)")
+        if overlap:
+            print("  Overlapping texts (leaked -- remove or reword these "
+                  "in eval/heldout.yaml):")
+            for text in overlap:
+                print(f"    {text!r}")
+        tradeoff_thresholds = sorted({0.50, 0.60, 0.71, 0.80, defer_threshold})
+    else:
+        print("Mode: template-derived test split (grouped_split)")
+        _train, _val, examples = grouped_split(
+            build_dataset(ROOT / "training" / "templates"))
+        tradeoff_thresholds = sorted({0.5, 0.6, 0.7, defer_threshold})
+
+    report = score(classifier, examples, defer_threshold)
+    passed = _print_report(report, classifier, examples, defer_threshold,
+                           tradeoff_thresholds)
+
+    return 0 if passed else 1
 
 
 if __name__ == "__main__":

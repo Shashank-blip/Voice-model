@@ -1,0 +1,726 @@
+# Hand-written held-out evaluation set for jarvis_nlu (Task 14).
+#
+# Independent of training/templates/*.yaml by construction: every phrasing
+# here was authored fresh, not copied or lightly reworded from a template
+# pattern, and training/evaluate.py --heldout runs a check that verifies
+# zero exact-text overlap with the generated training corpus. If you add a
+# case, re-run that check before committing.
+#
+# Style: written the way a person actually talks to a voice assistant --
+# lowercase, contractions, dropped articles, filler openers, sentence
+# fragments, no terminal punctuation. This is what Whisper output looks
+# like; it is not typed text.
+
+# ---------------------------------------------------------------- add_reminder
+- text: gimme a nudge about the dentist thursday
+  intent: add_reminder
+- text: don't forget to tell me to call the vet in an hour
+  intent: add_reminder
+- text: can you poke me when it's time to leave for the airport
+  intent: add_reminder
+- text: i need something to remind me about grandma's birthday next week
+  intent: add_reminder
+- text: set something up so i don't forget the trash goes out tonight
+  intent: add_reminder
+- text: throw a reminder in for picking up the kids at 3
+  intent: add_reminder
+- text: can you get me a heads up about the oil change tomorrow
+  intent: add_reminder
+- text: put a reminder on for taking my medicine at 9
+  intent: add_reminder
+- text: uh can you make sure i don't forget to text jake back
+  intent: add_reminder
+- text: alert me when it's time to start dinner
+  intent: add_reminder
+- text: i keep forgetting to water the plants can you set something for that
+  intent: add_reminder
+- text: can you buzz me about the parking meter in twenty minutes
+  intent: add_reminder
+- text: shoot me a reminder to grab coffee filters on the way home
+  intent: add_reminder
+- text: hey set something so i remember the meeting moved to noon
+  intent: add_reminder
+- text: don't let me miss the deadline for the report friday
+  intent: add_reminder
+- text: can you flag it so i remember to renew my license
+  intent: add_reminder
+- text: remind me to wish sarah good luck on her interview tomorrow
+  intent: add_reminder
+
+# --------------------------------------------------------------- list_reminders
+- text: what's still on my plate for today
+  intent: list_reminders
+- text: did i set any reminders for tomorrow
+  intent: list_reminders
+- text: check what i'm supposed to remember
+  intent: list_reminders
+- text: hit me with my to-dos
+  intent: list_reminders
+- text: what have you got queued up for me
+  intent: list_reminders
+- text: run me through what i need to remember today
+  intent: list_reminders
+- text: what reminders am i sitting on
+  intent: list_reminders
+- text: give me the rundown on my reminders
+  intent: list_reminders
+- text: what's left on my list for this afternoon
+  intent: list_reminders
+- text: what am i forgetting to do today
+  intent: list_reminders
+- text: read back what i asked you to remind me of
+  intent: list_reminders
+- text: what's outstanding on my reminder list
+  intent: list_reminders
+- text: anything i need to remember for tomorrow
+  intent: list_reminders
+- text: check my reminders real quick
+  intent: list_reminders
+- text: what's pending on my list
+  intent: list_reminders
+- text: did i have anything set to remember today
+  intent: list_reminders
+- text: what have i still got to take care of today
+  intent: list_reminders
+
+# -------------------------------------------------------------- cancel_reminder
+- text: yeah don't remind me about the dentist thing anymore
+  intent: cancel_reminder
+- text: you can axe that reminder about picking up the kids
+  intent: cancel_reminder
+- text: nix the reminder for calling the plumber
+  intent: cancel_reminder
+- text: i don't need that reminder about mom's pills anymore
+  intent: cancel_reminder
+- text: wipe out the reminder for the oil change
+  intent: cancel_reminder
+- text: that reminder about the rent thing isn't needed anymore
+  intent: cancel_reminder
+- text: can you get rid of my reminder for the flight
+  intent: cancel_reminder
+- text: toss the reminder about the parcel
+  intent: cancel_reminder
+- text: no need for that reminder about walking the dog anymore
+  intent: cancel_reminder
+- text: erase the reminder to call priya
+  intent: cancel_reminder
+- text: that reminder for the timesheet you can delete it
+  intent: cancel_reminder
+- text: i changed my mind cancel the reminder about the interview
+  intent: cancel_reminder
+- text: swipe away the reminder for grabbing milk
+  intent: cancel_reminder
+- text: the reminder about texting my sister isn't needed anymore
+  intent: cancel_reminder
+- text: can you knock out that reminder for the dentist
+  intent: cancel_reminder
+- text: just remove that thing you set for calling mom
+  intent: cancel_reminder
+- text: that reminder for feeding the cat go ahead and cancel it
+  intent: cancel_reminder
+
+# ----------------------------------------------------------- add_calendar_event
+- text: can you slot in my dentist thing for thursday at 2
+  intent: add_calendar_event
+- text: throw the team lunch on my calendar for friday
+  intent: add_calendar_event
+- text: i need my calendar to show the client call at 4
+  intent: add_calendar_event
+- text: get my haircut appointment down for saturday morning
+  intent: add_calendar_event
+- text: make sure my calendar has the flight to boston on it
+  intent: add_calendar_event
+- text: stick the game night on my calendar for next friday
+  intent: add_calendar_event
+- text: my calendar needs the doctor visit added for monday
+  intent: add_calendar_event
+- text: can you save the interview slot on my calendar tuesday at 10
+  intent: add_calendar_event
+- text: i want the anniversary dinner on my calendar for the 14th
+  intent: add_calendar_event
+- text: drop the project review into my calendar wednesday afternoon
+  intent: add_calendar_event
+- text: let's get the vet visit on the calendar for next week
+  intent: add_calendar_event
+- text: my calendar's missing the school play thursday evening put it in
+  intent: add_calendar_event
+- text: would you note the conference call on my calendar friday at 9
+  intent: add_calendar_event
+- text: the birthday party needs to go on my calendar saturday
+  intent: add_calendar_event
+- text: i need that lunch with sarah showing up on my calendar
+  intent: add_calendar_event
+- text: hold a spot on my calendar for the demo at noon
+  intent: add_calendar_event
+- text: put a note on my calendar that the flight got moved to 6am
+  intent: add_calendar_event
+
+# --------------------------------------------------------------- query_calendar
+- text: am i booked solid tomorrow
+  intent: query_calendar
+- text: how does next week look for me
+  intent: query_calendar
+- text: is my afternoon clear
+  intent: query_calendar
+- text: what's on the books for me this week
+  intent: query_calendar
+- text: give me the lay of the land for my week
+  intent: query_calendar
+- text: check if i'm double booked today
+  intent: query_calendar
+- text: what appointments do i have coming up
+  intent: query_calendar
+- text: is there anything i'm missing on my calendar
+  intent: query_calendar
+- text: how packed is my monday
+  intent: query_calendar
+- text: what's happening in my week ahead
+  intent: query_calendar
+- text: do i have any calls today
+  intent: query_calendar
+- text: check my calendar for gaps this week
+  intent: query_calendar
+- text: am i open this afternoon
+  intent: query_calendar
+- text: how many things do i have going on today
+  intent: query_calendar
+- text: do i have room for a coffee break today
+  intent: query_calendar
+- text: what's coming up on my calendar this weekend
+  intent: query_calendar
+- text: is there any room on my calendar for a haircut this week
+  intent: query_calendar
+
+# --------------------------------------------------------------------- add_note
+- text: put this in my notes the spare fuse is in the garage
+  intent: add_note
+- text: can you jot something down real quick
+  intent: add_note
+- text: stick this in my notes for later the meeting's been pushed
+  intent: add_note
+- text: i want you to remember this for me the code to the safe is 7719
+  intent: add_note
+- text: scribble this down somewhere the babysitter's number is on the fridge
+  intent: add_note
+- text: hang onto this info the flight got moved to gate 12
+  intent: add_note
+- text: can you file this away the landlord wants rent by the 5th
+  intent: add_note
+- text: throw this in my notes real quick the gym closes at 10 on weekends
+  intent: add_note
+- text: type this up for me so i don't forget the wine goes with the fish
+  intent: add_note
+- text: capture this thought before i lose it the idea for the app name
+  intent: add_note
+- text: stash this somewhere the tracking number for the package
+  intent: add_note
+- text: pin this down the doctor's office moved buildings
+  intent: add_note
+- text: get this written somewhere the alarm code changed to 8842
+  intent: add_note
+- text: can you hang onto this the cousin's flight lands at 6
+  intent: add_note
+- text: squirrel this away for me the anniversary gift idea
+  intent: add_note
+- text: just note somewhere that the internet bill went up
+  intent: add_note
+- text: quick note the babysitter can't make it saturday
+  intent: add_note
+
+# ------------------------------------------------------------------- list_notes
+- text: can you cycle through my notes for me
+  intent: list_notes
+- text: let's hear what i jotted down this week
+  intent: list_notes
+- text: what's sitting in my notes right now
+  intent: list_notes
+- text: bring up everything i saved as a note
+  intent: list_notes
+- text: what've i got stashed in my notes
+  intent: list_notes
+- text: scroll through my notes for me
+  intent: list_notes
+- text: let me hear my notes from earlier
+  intent: list_notes
+- text: what's in the notes pile today
+  intent: list_notes
+- text: can you rattle off my notes
+  intent: list_notes
+- text: give me a rundown of what i noted
+  intent: list_notes
+- text: what did i stash away in notes recently
+  intent: list_notes
+- text: check what's in my notes folder
+  intent: list_notes
+- text: recite my notes to me
+  intent: list_notes
+- text: what am i keeping track of in notes
+  intent: list_notes
+- text: flip through my saved notes for me
+  intent: list_notes
+- text: what's stored in my notes right now
+  intent: list_notes
+- text: can you go over what i've saved as notes
+  intent: list_notes
+
+# ----------------------------------------------------------------- search_notes
+- text: dig up whatever i saved about the landlord
+  intent: search_notes
+- text: what's the note i left about the babysitter
+  intent: search_notes
+- text: hunt down my note on the alarm code
+  intent: search_notes
+- text: did i jot anything down about the flight times
+  intent: search_notes
+- text: track down that note about the anniversary gift
+  intent: search_notes
+- text: what note did i leave about the tracking number
+  intent: search_notes
+- text: go find whatever i wrote about the doctor's office
+  intent: search_notes
+- text: what did i put down about the internet bill
+  intent: search_notes
+- text: can you locate my note on the safe code
+  intent: search_notes
+- text: root around for a note about the gym hours
+  intent: search_notes
+- text: what's that thing i noted about the cousin's flight
+  intent: search_notes
+- text: surface whatever i saved about the wine pairing
+  intent: search_notes
+- text: fish out the note i made about the babysitter's number
+  intent: search_notes
+- text: what did i jot regarding the fuse box
+  intent: search_notes
+- text: find whatever i wrote about the rent due date
+  intent: search_notes
+- text: look through my notes for anything about the gate code
+  intent: search_notes
+- text: what's the deal with that note about the meeting time change
+  intent: search_notes
+
+# ---------------------------------------------------------------------- get_time
+- text: whats the time right now real fast
+  intent: get_time
+- text: i lost track what time is it
+  intent: get_time
+- text: clock check please
+  intent: get_time
+- text: how many hours till midnight
+  intent: get_time
+- text: quick what time we at
+  intent: get_time
+- text: what's the clock say
+  intent: get_time
+- text: yo what time is it
+  intent: get_time
+- text: i need a time check
+  intent: get_time
+- text: am i running late what time is it
+  intent: get_time
+- text: gimme a time check
+  intent: get_time
+- text: what's the time on your end
+  intent: get_time
+- text: hang on what time is it now
+  intent: get_time
+- text: how far into the day are we
+  intent: get_time
+- text: throw me the time real quick
+  intent: get_time
+- text: gotta know the time right now
+  intent: get_time
+
+# ---------------------------------------------------------------------- get_date
+- text: i totally lost track what's today
+  intent: get_date
+- text: is today a monday or what
+  intent: get_date
+- text: quick what's the date
+  intent: get_date
+- text: help a guy out what day is it
+  intent: get_date
+- text: so confused what day is today
+  intent: get_date
+- text: check the date for me real quick
+  intent: get_date
+- text: what day are we on this week
+  intent: get_date
+- text: i need to write the date what is it
+  intent: get_date
+- text: date check please
+  intent: get_date
+- text: what's today in numbers
+  intent: get_date
+- text: so what's the actual date today
+  intent: get_date
+- text: yo what day is this
+  intent: get_date
+- text: gimme today's date real fast
+  intent: get_date
+- text: i need today's date for a form
+  intent: get_date
+- text: what day of the week are we on
+  intent: get_date
+
+# ---------------------------------------------------------------------- greeting
+- text: yo you up
+  intent: greeting
+- text: anybody home in there
+  intent: greeting
+- text: oi you awake
+  intent: greeting
+- text: well well look who's here
+  intent: greeting
+- text: ahoy jarvis
+  intent: greeting
+- text: hiya buddy long time no chat
+  intent: greeting
+- text: hey uh you online right now
+  intent: greeting
+- text: sup man how's it hanging
+  intent: greeting
+- text: yo jarvis you catching this
+  intent: greeting
+- text: hello hello anyone listening
+  intent: greeting
+- text: oh hey didn't see you there
+  intent: greeting
+- text: top of the morning to ya
+  intent: greeting
+- text: howdy partner
+  intent: greeting
+- text: hey hey wake up
+  intent: greeting
+- text: yo it's your favorite human
+  intent: greeting
+- text: greetings and salutations
+  intent: greeting
+- text: knock knock is this thing on
+  intent: greeting
+- text: hiya is this working
+  intent: greeting
+
+# ------------------------------------------------------------------- how_are_you
+- text: so how's your week been treating you
+  intent: how_are_you
+- text: everything running smooth on your end
+  intent: how_are_you
+- text: how are those circuits of yours holding up
+  intent: how_are_you
+- text: you keeping busy today
+  intent: how_are_you
+- text: life good over there
+  intent: how_are_you
+- text: how's the world treating you these days
+  intent: how_are_you
+- text: you feeling like yourself today
+  intent: how_are_you
+- text: how are you holding up under all this
+  intent: how_are_you
+- text: what's new with you today
+  intent: how_are_you
+- text: how's your evening shaping up
+  intent: how_are_you
+- text: all good in your world
+  intent: how_are_you
+- text: how are you managing today
+  intent: how_are_you
+- text: you hanging in there
+  intent: how_are_you
+- text: how's your morning been so far
+  intent: how_are_you
+- text: you doing well i hope
+  intent: how_are_you
+- text: how's your system doing today
+  intent: how_are_you
+
+# --------------------------------------------------------------------- user_mood
+- text: man today has just been a lot
+  intent: user_mood
+- text: ugh i'm so drained right now
+  intent: user_mood
+- text: i could really use a nap i'm wiped
+  intent: user_mood
+- text: not doing great today if i'm honest
+  intent: user_mood
+- text: i'm on cloud nine right now
+  intent: user_mood
+- text: kinda in my feels today
+  intent: user_mood
+- text: today's been rough not gonna sugarcoat it
+  intent: user_mood
+- text: i've had better days honestly
+  intent: user_mood
+- text: i'm running on empty today
+  intent: user_mood
+- text: things are looking up for me lately
+  intent: user_mood
+- text: i'm buzzing with energy today
+  intent: user_mood
+- text: today's been a whirlwind for me
+  intent: user_mood
+- text: i'm hanging in there barely
+  intent: user_mood
+- text: my mood's all over the place today
+  intent: user_mood
+- text: i'm pretty burnt out right now
+  intent: user_mood
+- text: today's actually been a good one for me
+  intent: user_mood
+- text: i'm low energy today not sure why
+  intent: user_mood
+
+# ------------------------------------------------------------------------ thanks
+- text: seriously that saved me so much time
+  intent: thanks
+- text: you're a real one for that
+  intent: thanks
+- text: solid work thanks for sorting that
+  intent: thanks
+- text: that really hit the spot thank you
+  intent: thanks
+- text: you came through big time
+  intent: thanks
+- text: i'm grateful for that one
+  intent: thanks
+- text: that was clutch thanks
+  intent: thanks
+- text: you're a legend for that
+  intent: thanks
+- text: well that was easy thanks to you
+  intent: thanks
+- text: you made my day with that
+  intent: thanks
+- text: that helped a ton honestly
+  intent: thanks
+- text: good looking out on that one
+  intent: thanks
+- text: you didn't have to but thanks
+  intent: thanks
+- text: that was super handy
+  intent: thanks
+- text: shoutout to you for that
+  intent: thanks
+- text: respect for handling that so fast
+  intent: thanks
+
+# ----------------------------------------------------------------------- goodbye
+- text: alright i'm heading to bed now
+  intent: goodbye
+- text: i'm out the door see you
+  intent: goodbye
+- text: that's it for me tonight
+  intent: goodbye
+- text: wrapping up for the day now
+  intent: goodbye
+- text: i'm calling it a night
+  intent: goodbye
+- text: gonna log off now
+  intent: goodbye
+- text: i'm done here for today
+  intent: goodbye
+- text: that'll do it for now bye
+  intent: goodbye
+- text: heading out the door now
+  intent: goodbye
+- text: i'm gonna head off now
+  intent: goodbye
+- text: i'm ducking out for a bit
+  intent: goodbye
+- text: peace out for now
+  intent: goodbye
+- text: alright i'm gonna dip
+  intent: goodbye
+- text: gonna step away for a while
+  intent: goodbye
+- text: closing up shop for the night
+  intent: goodbye
+- text: i'm gonna vanish for now
+  intent: goodbye
+- text: well that's a wrap for today
+  intent: goodbye
+
+# ------------------------------------------------------------------------ affirm
+- text: yeah let's do that
+  intent: affirm
+- text: that's the one
+  intent: affirm
+- text: you got it
+  intent: affirm
+- text: fine by me
+  intent: affirm
+- text: works for me
+  intent: affirm
+- text: i'm good with that
+  intent: affirm
+- text: let's go with that
+  intent: affirm
+- text: that'll do
+  intent: affirm
+- text: no objections here
+  intent: affirm
+- text: i'm on board with that
+  intent: affirm
+- text: go for that one
+  intent: affirm
+- text: that's what i want
+  intent: affirm
+- text: let's move forward with it
+  intent: affirm
+- text: i'm cool with that
+  intent: affirm
+- text: that checks out
+  intent: affirm
+- text: sounds like a plan
+  intent: affirm
+- text: green light on that
+  intent: affirm
+
+# -------------------------------------------------------------------------- deny
+- text: i'm gonna pass on that
+  intent: deny
+- text: let's not do that
+  intent: deny
+- text: that's a hard no from me
+  intent: deny
+- text: i'll take a rain check on that
+  intent: deny
+- text: leave it alone for now
+  intent: deny
+- text: not feeling it right now
+  intent: deny
+- text: i changed my mind on that
+  intent: deny
+- text: count me out of that
+  intent: deny
+- text: that's not gonna work for me
+  intent: deny
+- text: hold off on that for now
+  intent: deny
+- text: i'm not into that
+  intent: deny
+- text: we should skip that
+  intent: deny
+- text: let's shelve that idea
+  intent: deny
+- text: i take it back
+  intent: deny
+- text: don't go through with that
+  intent: deny
+- text: that's not right at all
+  intent: deny
+- text: hard pass
+  intent: deny
+
+# ------------------------------------------------------------------- repeat_last
+- text: sorry my brain glitched what was that
+  intent: repeat_last
+- text: i totally zoned out say it again
+  intent: repeat_last
+- text: wait what did you just tell me
+  intent: repeat_last
+- text: my bad can you go back to that
+  intent: repeat_last
+- text: i wasn't paying attention repeat please
+  intent: repeat_last
+- text: sorry i spaced out for a sec what'd you say
+  intent: repeat_last
+- text: run it back for me
+  intent: repeat_last
+- text: i lost you there start over
+  intent: repeat_last
+- text: i didn't quite process that can you redo it
+  intent: repeat_last
+- text: back up a sec what did you say
+  intent: repeat_last
+- text: give that to me one more time
+  intent: repeat_last
+- text: i tuned out for a second what happened
+  intent: repeat_last
+- text: rewind that for me
+  intent: repeat_last
+- text: say the last part again
+  intent: repeat_last
+- text: i missed the last bit can you replay it
+  intent: repeat_last
+- text: sorry come again slower this time
+  intent: repeat_last
+
+# ------------------------------------------------------------------------- sleep
+- text: you can knock off for the night
+  intent: sleep
+- text: take five jarvis
+  intent: sleep
+- text: go grab some rest
+  intent: sleep
+- text: i won't need you for a while so power down
+  intent: sleep
+- text: you're off the clock now
+  intent: sleep
+- text: go chill for a bit
+  intent: sleep
+- text: no need to listen anymore
+  intent: sleep
+- text: you can clock out now
+  intent: sleep
+- text: i'm gonna need you to go quiet for a while
+  intent: sleep
+- text: switch yourself off for now
+  intent: sleep
+- text: give it a rest for now
+  intent: sleep
+- text: you're free to go dark for a bit
+  intent: sleep
+- text: wrap it up and rest now
+  intent: sleep
+- text: take a nap jarvis
+  intent: sleep
+- text: you don't need to be on right now
+  intent: sleep
+- text: i don't need you listening in for a while
+  intent: sleep
+- text: go offline for the night
+  intent: sleep
+
+# ------------------------------------------------------------------- out_of_scope
+- text: shoot my boss a quick email
+  intent: out_of_scope
+- text: can you draft an email to the team
+  intent: out_of_scope
+- text: check if i got any new emails
+  intent: out_of_scope
+- text: forward that email to accounting for me
+  intent: out_of_scope
+- text: mark all my emails as read
+  intent: out_of_scope
+- text: throw on some lo-fi beats
+  intent: out_of_scope
+- text: crank up the volume on my playlist
+  intent: out_of_scope
+- text: next track please
+  intent: out_of_scope
+- text: shuffle my liked songs
+  intent: out_of_scope
+- text: queue up some jazz for the evening
+  intent: out_of_scope
+- text: kill the lights in the kitchen
+  intent: out_of_scope
+- text: crank the ac up a few degrees
+  intent: out_of_scope
+- text: lock up the house for me
+  intent: out_of_scope
+- text: open the garage door
+  intent: out_of_scope
+- text: set the porch light on a timer
+  intent: out_of_scope
+- text: look up the best sushi place nearby
+  intent: out_of_scope
+- text: google the nearest gas station
+  intent: out_of_scope
+- text: what's forty percent of 300
+  intent: out_of_scope
+- text: divide 900 by 15 for me
+  intent: out_of_scope
+- text: what's a good synonym for happy
+  intent: out_of_scope
