@@ -1,0 +1,35 @@
+intent: sleep
+slots:
+  hedge:
+  - ''
+  - jarvis
+  - for now
+  - please
+  - for a while
+  - until later
+  - for the night
+patterns:
+- go to sleep {hedge}
+- power down {hedge}
+- power off {hedge}
+- shut down {hedge}
+- stop listening {hedge}
+- stop listening to me {hedge}
+- go dormant {hedge}
+- go to standby {hedge}
+- go into standby mode {hedge}
+- stand down {hedge}
+- go to sleep mode {hedge}
+- enter sleep mode {hedge}
+- switch to sleep mode {hedge}
+- mute yourself {hedge}
+- go quiet {hedge}
+- hush {hedge}
+- go idle {hedge}
+- go inactive {hedge}
+- silence yourself {hedge}
+- suspend yourself {hedge}
+- power yourself down {hedge}
+- put yourself on standby {hedge}
+- deactivate your mic {hedge}
+- stop paying attention {hedge}

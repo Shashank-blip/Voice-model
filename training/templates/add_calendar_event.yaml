@@ -1,0 +1,52 @@
+intent: add_calendar_event
+slots:
+  event:
+  - the dentist appointment
+  - a meeting with the team
+  - the doctor's appointment
+  - lunch with sarah
+  - the flight to chicago
+  - a call with the client
+  - the birthday party
+  - a gym session
+  - the job interview
+  - a dinner reservation
+  - the project deadline
+  - the team standup
+  - a haircut
+  - the client demo
+  - a checkup with the vet
+  time:
+  - tomorrow at 3
+  - on friday at 10
+  - next monday at 2
+  - at noon
+  - tonight at 7
+  - this weekend
+  - on the 5th at 9
+  - in the afternoon
+  - next tuesday at 11
+  - at 8 am
+  - this friday at 5
+  - on the 20th
+patterns:
+- add {event} to my calendar {time}
+- put {event} on my calendar {time}
+- schedule {event} {time}
+- book {event} {time} on my calendar
+- create a calendar event for {event} {time}
+- add an event {time} for {event}
+- put {event} on the calendar {time}
+- schedule a meeting for {event} {time}
+- set up {event} on my calendar {time}
+- can you add {event} to my calendar {time}
+- block off time for {event} {time}
+- pencil in {event} {time}
+- add {event} to my schedule {time}
+- new calendar event {time} for {event}
+- put {event} in my calendar {time}
+- get {event} on my calendar {time}
+- mark {event} on my calendar {time}
+- put {event} in my schedule {time}
+- add an appointment for {event} {time}
+- calendar this {event} {time}

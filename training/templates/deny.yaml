@@ -1,0 +1,37 @@
+intent: deny
+slots:
+  hedge:
+  - ''
+  - please
+  - jarvis
+  - thanks
+  - for now
+  - actually
+  - not today
+  - no way
+patterns:
+- no {hedge}
+- nope {hedge}
+- nah {hedge}
+- not now {hedge}
+- cancel that {hedge}
+- never mind {hedge}
+- don't do that {hedge}
+- that's wrong {hedge}
+- not right now {hedge}
+- negative {hedge}
+- no thanks {hedge}
+- stop that {hedge}
+- forget it {hedge}
+- that's not what i meant {hedge}
+- that's incorrect {hedge}
+- not interested {hedge}
+- i don't think so {hedge}
+- wrong {hedge}
+- incorrect {hedge}
+- that's not it {hedge}
+- absolutely not {hedge}
+- nah forget it {hedge}
+- belay that {hedge}
+- scratch that {hedge}
+- i said no {hedge}

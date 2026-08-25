@@ -1,0 +1,48 @@
+intent: add_note
+slots:
+  content:
+  - buy milk
+  - pick up dry cleaning
+  - the wifi password is sunflower123
+  - the gate code is 4521
+  - mom's birthday is on the 12th
+  - the recipe needs two cups of flour
+  - the car needs an oil change
+  - the new address for the office
+  - the client's phone number is on the desk
+  - the router needs a restart
+  - the invoice number for the order
+  - the vet's number is on the fridge
+  - the neighbor's dog is named max
+  - my locker combination is 12 34 56
+  - the warranty expires next year
+  - dad's favorite color is blue
+  - the spare key is under the mat
+  - the printer needs new toner
+patterns:
+- take a note {content}
+- take a note that {content}
+- note that {content}
+- add a note {content}
+- add a note that {content}
+- write down {content}
+- jot down {content}
+- make a note {content}
+- save a note {content}
+- remember that {content}
+- can you note that {content}
+- put in my notes {content}
+- add to my notes {content}
+- create a note {content}
+- note this down {content}
+- keep a note that {content}
+- log a note {content}
+- jot this down {content}
+- note for later {content}
+- record that {content}
+- keep track that {content}
+- make sure i remember {content}
+- add this note {content}
+- save this to my notes {content}
+- note to self {content}
+- take a note buy milk

@@ -1,0 +1,32 @@
+intent: get_date
+slots:
+  hedge:
+  - ''
+  - please
+  - today
+  - right now
+  - exactly
+  - for me
+  - currently
+  - quickly
+patterns:
+- what's the date {hedge}
+- what's today's date {hedge}
+- what day is it {hedge}
+- do you know the date {hedge}
+- what day of the week is it {hedge}
+- tell me the date {hedge}
+- what's today {hedge}
+- can you tell me the date {hedge}
+- what's the day today {hedge}
+- give me today's date {hedge}
+- what number day of the month is it {hedge}
+- is it a weekday {hedge}
+- what's the full date today {hedge}
+- remind me what day it is {hedge}
+- what's the date today {hedge}
+- can you give me today's date {hedge}
+- what day of the month is it {hedge}
+- do you have today's date {hedge}
+- what's the calendar date {hedge}
+- tell me today's date {hedge}

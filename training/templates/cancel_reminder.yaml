@@ -1,0 +1,44 @@
+intent: cancel_reminder
+slots:
+  task:
+  - call mom
+  - pay the rent
+  - take the bread out
+  - email priya
+  - book the dentist
+  - water the plants
+  - submit the timesheet
+  - pick up the parcel
+  - say hi to Alex
+  - feed the cat
+  - walk the dog
+  - call the plumber
+  - buy milk
+  - charge my phone
+  - take my pills
+  - book the flight
+  - follow up with the team
+  - review the contract
+  - return the library books
+  - text my sister
+patterns:
+- cancel my reminder to {task}
+- cancel the reminder about {task}
+- delete my reminder to {task}
+- remove the reminder to {task}
+- forget the reminder to {task}
+- clear my reminder to {task}
+- get rid of the reminder to {task}
+- i don't need to be reminded to {task} anymore
+- turn off the reminder to {task}
+- delete the reminder about {task}
+- scratch that reminder to {task}
+- undo the reminder to {task}
+- cancel the reminder to {task}
+- take off the reminder to {task}
+- you can cancel the reminder to {task}
+- drop the reminder to {task}
+- please cancel my reminder to {task}
+- i want to cancel the reminder to {task}
+- kill the reminder to {task}
+- get rid of that reminder about {task}

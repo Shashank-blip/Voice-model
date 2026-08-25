@@ -1,0 +1,37 @@
+intent: query_calendar
+slots:
+  day:
+  - today
+  - tomorrow
+  - on friday
+  - this afternoon
+  - this week
+  - next week
+  - on monday
+  - this weekend
+  - tonight
+  - in the morning
+  - this morning
+  - for the rest of the day
+  - ''
+patterns:
+- what is on my calendar {day}
+- what's on my calendar {day}
+- whats my schedule {day}
+- what does my day look like {day}
+- do i have anything {day}
+- am i free {day}
+- what have i got on {day}
+- read me my calendar {day}
+- what's my day looking like {day}
+- anything on the calendar {day}
+- run me through {day}
+- what am i doing {day}
+- what's happening on my calendar {day}
+- any meetings {day}
+- how busy am i {day}
+- what's my day look like {day}
+- what is on my calendar today
+- give me my schedule {day}
+- what's booked on my calendar {day}
+- walk me through my calendar {day}
