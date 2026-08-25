@@ -27,6 +27,12 @@ class Result:
     confidence: float
     slots: dict = field(default_factory=dict)
     needs_confirmation: bool = False
+    # Task F (two-strike deferral policy). A re-prompt IS spoken, so it
+    # carries handled=True like any other answered turn -- `handled` alone
+    # must never be overloaded to also mean "call the LLM". `reprompt=True`
+    # is the caller's signal that this reply exists only to ask the user to
+    # repeat themselves, not because the turn was genuinely answered.
+    reprompt: bool = False
 
 
 DEFERRED = Result(handled=False, reply=None,
@@ -48,6 +54,12 @@ class Assistant:
         # speaks over the user mid-exchange.
         self.turn_lock = threading.Lock()
         self._pending: tuple[str, str] | None = None  # (intent_value, original text)
+        # Task F: consecutive below-`defer` turns. Only ever 0 or 1 --
+        # reaching the 2-strike threshold fires the LLM signal AND resets
+        # it in the same step (see _handle_low_confidence), so it never
+        # climbs past 1 and, since it is only ever incremented from 0 or
+        # reset to 0, it can never go negative either.
+        self._consecutive_unsure = 0
 
     def handle(self, text: str, now: datetime | None = None) -> Result:
         now = now or datetime.now()
@@ -58,8 +70,16 @@ class Assistant:
         with self.turn_lock:
             intent_value, confidence = self.classifier.classify(text)
 
-            # Deferral is the designed path, not an error.
-            if intent_value == Intent.OUT_OF_SCOPE.value or confidence < self.thresholds.defer:
+            # Below defer: the model is merely unsure, most often a garbled
+            # transcript rather than a genuinely out-of-scope request. The
+            # two-strike policy handles this BEFORE the out-of-scope check
+            # below, since it applies regardless of predicted intent.
+            if confidence < self.thresholds.defer:
+                return self._handle_low_confidence(intent_value, confidence)
+
+            # Confidently predicted out-of-scope: this genuinely needs the
+            # LLM, immediately -- no re-prompt, no strike bookkeeping.
+            if intent_value == Intent.OUT_OF_SCOPE.value:
                 return Result(handled=False, reply=None,
                               intent=intent_value, confidence=confidence)
 
@@ -75,6 +95,23 @@ class Assistant:
 
             return self._dispatch(intent_value, text, confidence, now)
 
+    def _handle_low_confidence(self, intent_value: str, confidence: float) -> Result:
+        """Task F two-strike policy. First consecutive below-`defer` turn:
+        free local re-prompt, no LLM call. Second consecutive: genuinely
+        escalate to the LLM (handled=False) -- and reset immediately, so a
+        run of low-confidence turns cycles re-prompt/escalate/re-prompt/...
+        rather than escalating on every turn from the second onward."""
+        self._consecutive_unsure += 1
+        if self._consecutive_unsure >= 2:
+            self._consecutive_unsure = 0
+            return Result(handled=False, reply=None,
+                          intent=intent_value, confidence=confidence)
+
+        reply = self.pool.pick("reprompt")
+        self.last_reply = reply
+        return Result(handled=True, reply=reply, intent=intent_value,
+                      confidence=confidence, reprompt=True)
+
     def _resolve_pending(self, answer: str, confidence: float, now: datetime) -> Result:
         pending_intent, pending_text = self._pending
         self._pending = None
@@ -84,6 +121,12 @@ class Assistant:
 
     def _reply(self, text: str, intent_value: str, confidence: float,
                needs_confirmation: bool = False, slots: dict | None = None) -> Result:
+        # The single choke point for every genuinely-handled reply
+        # (dispatch success/apology, confirmation prompts, deny) -- Task F:
+        # any successfully handled turn resets the strike counter to zero.
+        # _handle_low_confidence's re-prompt deliberately bypasses this
+        # method so the counter is NOT reset by a re-prompt itself.
+        self._consecutive_unsure = 0
         self.last_reply = text
         return Result(handled=True, reply=text, intent=intent_value,
                       confidence=confidence, slots=slots or {},

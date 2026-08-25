@@ -99,6 +99,22 @@ POOLS: dict[str, list[str]] = {
         "Fair enough.", "Understood.", "No problem at all.",
         "Alright, forget I asked.", "Sure, we'll skip it.",
     ],
+    # Task F: the two-strike deferral policy's first-strike reply. Below
+    # `defer` confidence, this is almost always a garbled Whisper transcript,
+    # not a genuinely out-of-scope request -- so the free, local fix is to
+    # ask again, not to spend an LLM call guessing at it.
+    "reprompt": [
+        "Didn't quite catch that, sugar.",
+        "Say that again for me?",
+        "Come again, hon?",
+        "Missed that one -- one more time?",
+        "Hmm, didn't land right. Try me again?",
+        "Say what now, sugar?",
+        "I'm not quite gettin' that. Once more?",
+        "That one got garbled on my end -- again?",
+        "Come again? I want to get this right.",
+        "Didn't quite hear you there. Mind repeatin' that?",
+    ],
     "unknown_error": [
         "Well shoot, somethin' went sideways on my end.",
         "Hm, that didn't take. Try me again?",
