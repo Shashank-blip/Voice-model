@@ -17,7 +17,7 @@ import json
 
 import torch
 from onnxruntime.quantization import QuantType, quantize_dynamic
-from transformers import AutoTokenizer
+from transformers import AutoModel, AutoTokenizer
 
 from training.train import BASE_MODEL, MAX_LENGTH, IntentModel
 
@@ -53,6 +53,39 @@ def main() -> None:
     fp32.unlink()
     size_mb = (models_dir / "intent.onnx").stat().st_size / 1e6
     print(f"exported models/intent.onnx ({size_mb:.1f} MB)")
+
+    class _Encoder(torch.nn.Module):
+        def __init__(self, encoder):
+            super().__init__()
+            self.encoder = encoder
+
+        def forward(self, input_ids, attention_mask):
+            return self.encoder(input_ids=input_ids,
+                                attention_mask=attention_mask).last_hidden_state
+
+    # Deliberately NOT `model.encoder`: fine-tuning collapsed the sentence-
+    # embedding geometry onto the 20-way intent boundary, so mean-pooled
+    # cosine similarity between two *unrelated* sentences after fine-tuning
+    # (measured ~0.6) can exceed the similarity between a genuinely related
+    # query/note pair (measured ~0.4) -- unusable for retrieval. A fresh,
+    # never-fine-tuned copy of the same base checkpoint keeps the
+    # contrastively-trained embedding geometry sentence-transformers models
+    # are built for (measured: unrelated pairs ~0.0, related pairs 0.3-0.7).
+    # Same architecture, same tokenizer, no extra runtime dependency --
+    # just distinct weights from the classification head.
+    bare_encoder = AutoModel.from_pretrained(BASE_MODEL)
+    bare_encoder.eval()
+    torch.onnx.export(
+        _Encoder(bare_encoder), (dummy["input_ids"], dummy["attention_mask"]),
+        models_dir / "encoder.onnx",
+        input_names=["input_ids", "attention_mask"], output_names=["hidden"],
+        dynamic_axes={"input_ids": {0: "batch", 1: "seq"},
+                      "attention_mask": {0: "batch", 1: "seq"},
+                      "hidden": {0: "batch", 1: "seq"}},
+        opset_version=17,
+        dynamo=False)
+    encoder_size_mb = (models_dir / "encoder.onnx").stat().st_size / 1e6
+    print(f"exported models/encoder.onnx ({encoder_size_mb:.1f} MB)")
 
 
 if __name__ == "__main__":
