@@ -37,9 +37,19 @@ Verified on 2026-08-25:
 Neither is caused by this work, but both will shape how it feels to use.
 
 **1. `record_utterance` records a fixed 8 seconds with no voice-activity detection**
-(`stt/transcribe.py`). Every turn costs 8 seconds of silence after you stop talking,
-including "what time is it". This will dominate perceived latency — the classifier
-answers in 16ms and then you wait 8 seconds. Task C includes a fix.
+(`stt/transcribe.py`). Measured breakdown of one "what time is it" turn:
+
+| stage | measured | fixable to |
+|---|---|---|
+| **recording (fixed 8s, no endpointing)** | **8.00s** | **~1.5s** |
+| whisper `base` transcribe | 1.01s | ~0.4s (`tiny`) |
+| **jarvis classify** | **0.012s** | — |
+| edge-tts synthesis (network) | 1.60s | ~0.2s (local piper) |
+| **total** | **~11.6s** | **~3s** |
+
+The classifier is 12 milliseconds — irrelevant to perceived speed. The fixed recording
+window is the entire problem. Also measured: **whisper `base` takes 16s to load at
+startup**, so the process must stay warm rather than start on wake.
 
 **2. `edge-tts` is a network service.** It calls Microsoft's endpoint, so the assistant
 is not offline-capable and every reply has network latency. This contradicts the
@@ -157,8 +167,56 @@ Not code — a documented procedure, to run once the log has enough labelled tur
 - [ ] No entry has `intent` until reviewed
 - [ ] `git check-ignore data/learning_log.jsonl` confirms it is ignored
 
-## Open decisions for the user
+## Decisions — resolved 2026-08-25
 
-1. **Threshold** — ship `defer≈0.93` (fewer wrong actions, ~40% deferral) or keep it lower (more wrong actions, fewer API calls)? Task A assumes 0.93.
-2. **edge-tts is a network service.** Accept, or plan a local TTS fallback later?
-3. **Log retention** — keep forever, or auto-trim after N days?
+1. **Threshold: ship `defer = 0.83`**, not 0.93. With the two-strike policy below, a
+   deferral costs a re-prompt rather than an API call, so the argument for a very high
+   threshold weakens. At 0.83: 66.5% handled instantly, 29.4% unsure, 4.2% genuinely
+   out of scope.
+2. **edge-tts network dependency: accepted for now.** Measured 1.6s per reply. Task G
+   covers a local fallback if that proves annoying.
+3. **Log retention: keep everything, no trimming.** ~200 bytes per turn, under 2MB/year
+   at 30 turns/day. There is no size argument for deleting training data. Local and
+   gitignored; the user deletes it manually if they want.
+
+---
+
+## Task F: Two-strike deferral policy — the LLM-call reduction
+
+**Files:** Modify `jarvis_nlu/router.py`, `jarvis_nlu/responses.py`; test `tests/test_two_strike.py`
+
+**Why this matters most for the user's stated goal.** Measured on the held-out set at
+`defer = 0.83`, deferrals split into two very different cases:
+
+| outcome | share of turns |
+|---|---|
+| handled locally | 66.5% |
+| **genuinely out of scope** (needs the LLM) | **4.2%** |
+| **model merely unsure** | **29.4%** |
+
+Today all 33.6% would hit OpenRouter. But "unsure" usually means a garbled Whisper
+transcript, and the correct response to that is not an API call — it is *"say that
+again, sugar?"*, which is free and is what a person would do.
+
+**Policy:**
+- `out_of_scope` at or above `defer` → this genuinely needs the LLM. Call it.
+- Below `defer`, first occurrence → return a `reprompt` result. **No API call.**
+- Below `defer`, second consecutive occurrence → now call the LLM.
+- Any successfully handled turn resets the strike counter.
+
+Expected effect: real API usage drops from ~33% of turns to roughly 4–8%, i.e. **1–3
+calls per day** at realistic usage, against a 50/day budget.
+
+Every re-prompt is also a logged miss — free training signal, at no cost.
+
+- [ ] **Step 1:** Failing tests — first low-confidence turn returns `handled=True` with a
+      re-prompt reply and makes no LLM call; a second consecutive low-confidence turn sets
+      `should_call_llm`; a successful turn in between resets the counter; a confident
+      `out_of_scope` calls the LLM immediately without a re-prompt.
+- [ ] **Step 2:** Run; confirm failure.
+- [ ] **Step 3:** Add a `reprompt` pool to `responses.py` (8+ variants in the persona voice —
+      "Didn't quite catch that, sugar", "Say that again for me?"). Add strike tracking to
+      `Assistant`. Extend `Result` with `reprompt: bool` so the caller can distinguish
+      "ask again" from "call the LLM" — do not overload `handled`.
+- [ ] **Step 4:** Run tests; verify the full suite still passes.
+- [ ] **Step 5:** Commit.
