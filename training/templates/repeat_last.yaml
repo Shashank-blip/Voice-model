@@ -17,10 +17,16 @@ patterns:
 - come again {hedge}
 - i didn't catch that {hedge}
 - say it again {hedge}
-- what was that {hedge}
+- what was that again {hedge}
 - run that by me again {hedge}
 - could you say that again {hedge}
 - i missed that can you repeat {hedge}
 - what did you just say {hedge}
 - can you say that one more time {hedge}
 - i didn't hear you {hedge}
+- huh {hedge}
+- pardon {hedge}
+- one more time please {hedge}
+- say that once more {hedge}
+- i didn't get that {hedge}
+- can you go over that again {hedge}

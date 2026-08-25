@@ -24,3 +24,9 @@ patterns:
 - is it a weekday {hedge}
 - what's the full date today {hedge}
 - remind me what day it is {hedge}
+- what's the date today {hedge}
+- can you give me today's date {hedge}
+- what day of the month is it {hedge}
+- do you have today's date {hedge}
+- what's the calendar date {hedge}
+- tell me today's date {hedge}

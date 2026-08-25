@@ -19,8 +19,16 @@ patterns:
 - gotta go {closer}
 - see ya {closer}
 - i'm off {closer}
-- that's all for now {closer}
 - talk soon {closer}
 - see you tomorrow {closer}
-- shutting down for now {closer}
-- i'm done for today {closer}
+- farewell {closer}
+- i'm leaving now {closer}
+- i'll see you later {closer}
+- signing off {closer}
+- have a good one {closer}
+- i'm out {closer}
+- later {closer}
+- catch ya later {closer}
+- until next time {closer}
+- off i go {closer}
+- take it easy {closer}

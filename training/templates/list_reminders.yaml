@@ -27,3 +27,10 @@ patterns:
 - pull up my reminders {day}
 - run through my reminders {day}
 - what's still on my reminder list {day}
+- what do i have to do {day}
+- what do i need to do {day}
+- what do i gotta do {day}
+- what's on my to-do list {day}
+- what am i supposed to do {day}
+- what tasks do i have {day}
+- what all do i gotta do today

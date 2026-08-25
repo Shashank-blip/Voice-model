@@ -31,3 +31,12 @@ patterns:
 - '{opener} it''s me'
 - '{opener} what''s good'
 - '{opener} it''s me again'
+- '{opener} is anyone there'
+- '{opener} you awake'
+- '{opener} you online'
+- well {opener}
+- '{opener} nice to see you'
+- '{opener} it''s been a while'
+- '{opener} i''m here'
+- '{opener} good to be back'
+- '{opener} knock knock'

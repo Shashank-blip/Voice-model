@@ -46,3 +46,7 @@ patterns:
 - new calendar event {time} for {event}
 - put {event} in my calendar {time}
 - get {event} on my calendar {time}
+- mark {event} on my calendar {time}
+- put {event} in my schedule {time}
+- add an appointment for {event} {time}
+- calendar this {event} {time}

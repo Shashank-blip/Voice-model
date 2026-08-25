@@ -5,7 +5,6 @@ slots:
   - please
   - jarvis
   - go for it
-  - thanks
   - for sure
   - definitely
   - of course
@@ -25,3 +24,13 @@ patterns:
 - exactly {hedge}
 - that works {hedge}
 - that's correct {hedge}
+- uh huh {hedge}
+- mhm {hedge}
+- that's it {hedge}
+- affirmative {hedge}
+- roger that {hedge}
+- please do {hedge}
+- make it happen {hedge}
+- yes go ahead {hedge}
+- sounds right {hedge}
+- spot on {hedge}

@@ -47,7 +47,7 @@ patterns:
 - nudge me to {task} {time}
 - remind me about {task} {time}
 - i need a reminder to {task} {time}
-- make sure i {task} {time}
+- make sure you remind me to {task} {time}
 - give me a nudge to {task} {time}
 - remember to remind me to {task} {time}
 - hey can you remind me to {task} {time}
@@ -55,3 +55,6 @@ patterns:
 - i need to {task} {time}, remind me
 - remind me to call mom at 6 pm
 - remind me to say hi to Alex tomorrow at 6 pm
+- set up a reminder to {task} {time}
+- add a reminder for {task} {time}
+- flag a reminder to {task} {time}

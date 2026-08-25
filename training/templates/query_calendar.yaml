@@ -32,3 +32,6 @@ patterns:
 - how busy am i {day}
 - what's my day look like {day}
 - what is on my calendar today
+- give me my schedule {day}
+- what's booked on my calendar {day}
+- walk me through my calendar {day}

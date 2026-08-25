@@ -37,3 +37,8 @@ patterns:
 - cancel the reminder to {task}
 - take off the reminder to {task}
 - you can cancel the reminder to {task}
+- drop the reminder to {task}
+- please cancel my reminder to {task}
+- i want to cancel the reminder to {task}
+- kill the reminder to {task}
+- get rid of that reminder about {task}

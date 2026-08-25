@@ -32,3 +32,8 @@ patterns:
 - check my notes for {topic}
 - did i write anything about {topic}
 - what did I note about the wifi
+- search for my note on {topic}
+- can you find my note about {topic}
+- look for a note about {topic}
+- do you remember what i wrote about {topic}
+- pull up what i said about {topic}
