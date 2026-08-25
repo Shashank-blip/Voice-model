@@ -30,4 +30,4 @@ patterns:
 - what hour is it {hedge}
 - do you know the time {hedge}
 - tell me what time it is {hedge}
-- what's the reading on the clock {hedge}
+- give me the current time {hedge}
