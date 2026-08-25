@@ -1,4 +1,5 @@
 from datetime import datetime
+from pathlib import Path
 
 import pytest
 
@@ -118,3 +119,34 @@ def test_skill_exception_returns_an_apology_not_a_crash(tmp_path, monkeypatch):
     result = a.handle("what time is it", NOW)
     assert result.handled is True
     assert result.reply  # a spoken apology, not an exception
+
+
+
+def test_real_trained_thresholds_still_gate_destructive_confirmation(tmp_path):
+    """Regression test for an empty confirmation band (task-12 review round
+    2, Important 1): _choose_thresholds could pick tau_confirm == tau_defer,
+    making the reachable confirmation band [defer, confirm) empty, so a
+    destructive intent right above defer executed without ever asking.
+    THRESHOLDS above is hand-picked and always leaves a normal-sized gap,
+    so it cannot catch this class of bug -- load the ACTUAL trained
+    manifest instead."""
+    manifest_path = Path(__file__).parent.parent / "models" / "manifest.json"
+    if not manifest_path.exists():
+        pytest.skip("no trained model manifest at models/manifest.json")
+    real_thresholds = Thresholds.from_manifest(manifest_path)
+    assert real_thresholds.confirm > real_thresholds.defer, (
+        "confirmation band is empty or inverted -- a destructive intent "
+        "would execute the instant it clears defer, without ever asking")
+
+    storage = Storage(tmp_path / "t.db")
+    assistant = Assistant(
+        config=Config(), storage=storage,
+        classifier=FakeClassifier({
+            "drop the mom thing": (
+                "cancel_reminder", real_thresholds.defer + 0.01)
+        }),
+        thresholds=real_thresholds)
+    storage.add_reminder("call mom", datetime(2026, 8, 24, 18, 0))
+    result = assistant.handle("drop the mom thing", NOW)
+    assert result.needs_confirmation is True
+    assert len(storage.list_reminders()) == 1  # nothing destroyed yet

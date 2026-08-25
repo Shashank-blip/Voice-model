@@ -31,8 +31,8 @@ class Thresholds:
         if not path.exists():
             raise FileNotFoundError(
                 f"No model manifest at {path}. Build the model first:\n"
-                f"  python training/generate.py && python training/train.py "
-                f"&& python training/export_onnx.py")
+                f"  python -m training.generate && python -m training.train "
+                f"&& python -m training.export_onnx")
         raw = json.loads(path.read_text(encoding="utf-8"))["thresholds"]
         return cls(defer=float(raw["defer"]), confirm=float(raw["confirm"]))
 

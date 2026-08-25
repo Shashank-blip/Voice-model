@@ -34,9 +34,17 @@ _LEAD_IN = re.compile(
     r"(?:remind me(?:\s+(?:to|that|about))?|set a reminder(?:\s+(?:to|for|about))?|"
     r"don'?t let me forget(?:\s+to)?|nudge me(?:\s+(?:to|about))?)\s*", re.I)
 
+# Verbs the classifier recognises as cancel_reminder but that this regex
+# must also parse, or a correctly-classified turn still fails to find the
+# reminder it named (see Important 2, task-12 review round 2): "scratch",
+# "nix", "kill", "clear", and the two-word "never mind". "that" is accepted
+# alongside "the"/"my" as the article after the verb, since spoken cancels
+# commonly go "scratch THAT mom reminder" / "scrap THAT reminder".
 _CANCEL_LEAD_IN = re.compile(
-    r"^\s*(?:please\s+)?(?:cancel|delete|remove|forget|drop|scrap)\s+"
-    r"(?:the\s+|my\s+)?", re.I)
+    r"^\s*(?:please\s+)?"
+    r"(?:cancel|delete|remove|forget|drop|scrap|scratch|nix|kill|clear|"
+    r"never\s*mind)\s+"
+    r"(?:the\s+|my\s+|that\s+)?", re.I)
 _CANCEL_TRAILER = re.compile(r"\s*reminder(?:s)?\s*$", re.I)
 
 # Stored/spoken in place of a body when extraction left nothing behind (e.g.

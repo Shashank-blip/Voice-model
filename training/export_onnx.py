@@ -2,8 +2,18 @@
 only -- no torch in the deployed package."""
 from __future__ import annotations
 
-import json
+import sys
 from pathlib import Path
+
+# Allow `python training/export_onnx.py` (script's own directory on
+# sys.path[0], not the repo root) as well as `python -m training.export_onnx`
+# (repo root already on sys.path). Must run before the local-package
+# imports below.
+_ROOT_FOR_IMPORTS = Path(__file__).resolve().parent.parent
+if str(_ROOT_FOR_IMPORTS) not in sys.path:
+    sys.path.insert(0, str(_ROOT_FOR_IMPORTS))
+
+import json
 
 import torch
 from onnxruntime.quantization import QuantType, quantize_dynamic

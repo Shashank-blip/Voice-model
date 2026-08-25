@@ -82,6 +82,25 @@ def test_cancel_asks_when_multiple_match(store):
     assert "which" in reply.lower()
 
 
+@pytest.mark.parametrize("phrase", [
+    "scratch that mom reminder",
+    "scrap that mom reminder",
+    "never mind the mom reminder",
+    "nix the mom reminder",
+    "kill the mom reminder",
+    "clear the mom reminder",
+])
+def test_cancel_recognises_verbs_the_classifier_now_recognises(store, phrase):
+    """The intent classifier now recognises these as cancel_reminder; the
+    skill's lead-in regex has to keep up or a correctly-routed turn still
+    fails to find the reminder it named (task-12 review round 2,
+    Important 2)."""
+    reminders.add(store, "remind me to call mom at 6 pm", NOW)
+    reply = reminders.cancel(store, phrase, NOW)
+    assert store.list_reminders() == []          # the reminder was actually cancelled
+    assert "call mom" in reply
+
+
 def test_add_reply_reads_naturally_for_a_verb_phrase_body(store):
     reply = reminders.add(store, "remind me to call mom at 6 pm", NOW)
     assert reply == "You got it — call mom, at 6:00 PM on Monday."

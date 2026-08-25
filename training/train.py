@@ -18,11 +18,20 @@ alternatives to one another.
 """
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
+# Allow `python training/train.py` (script's own directory on sys.path[0],
+# not the repo root) as well as `python -m training.train` (repo root
+# already on sys.path). Must run before the local-package imports below.
+_ROOT_FOR_IMPORTS = Path(__file__).resolve().parent.parent
+if str(_ROOT_FOR_IMPORTS) not in sys.path:
+    sys.path.insert(0, str(_ROOT_FOR_IMPORTS))
+
 import json
 import random
 from collections import Counter, defaultdict
 from datetime import datetime
-from pathlib import Path
 
 import numpy as np
 import torch
@@ -40,6 +49,16 @@ BATCH_SIZE = 32
 LEARNING_RATE = 3e-5
 ROOT = Path(__file__).parent.parent
 LABELS = [i.value for i in ALL_INTENTS]
+
+# Fixes DataLoader shuffling, dropout, and head-init randomness so
+# intent.pt, temperature, and thresholds are reproducible run-to-run --
+# Task 14's gates assert on these artifacts. Recorded in the manifest.
+SEED = 0
+
+# One confidently-wrong local answer (a bad autonomous action, or a wrong
+# answer presented as fact) costs roughly as much user trust/support burden
+# as five wasted deferrals to the cloud API. Used by _choose_thresholds.
+MISCLASSIFY_COST = 5.0
 
 
 def grouped_split(examples: list[Example], seed: int = 0
@@ -60,6 +79,15 @@ def grouped_split(examples: list[Example], seed: int = 0
         # in val and test even when an intent has few templates.
         n_val = max(1, round(len(ids) * 0.1)) if len(ids) >= 3 else 1
         n_test = max(1, round(len(ids) * 0.1)) if len(ids) >= 3 else 1
+        n_train = len(ids) - n_val - n_test
+        if n_train <= 0:
+            raise ValueError(
+                f"Intent {intent!r} has only {len(ids)} template(s), which "
+                f"leaves zero for training after reserving {n_val} for val "
+                f"and {n_test} for test. Add at least "
+                f"{n_val + n_test + 1} templates for this intent -- "
+                f"otherwise compute_class_weights silently assigns it a "
+                f"default weight and masks the missing training data.")
         for index, template_id in enumerate(ids):
             if index < n_val:
                 assignment[template_id] = "val"
@@ -86,8 +114,17 @@ def compute_class_weights(examples: list[Example]) -> torch.Tensor:
 
 
 def fit_temperature(logits: np.ndarray, labels: np.ndarray) -> float:
-    """Temperature scaling. Raw softmax is overconfident; a temperature above
-    1 spreads probability mass so the deferral threshold means something."""
+    """Temperature scaling: divide logits by a learned scalar T before the
+    softmax to correct miscalibration, in EITHER direction. T > 1 spreads
+    probability mass (softens overconfident logits); T < 1 concentrates it
+    (sharpens underconfident logits). T is fit by minimising NLL on a
+    held-out split, so it moves whichever way that split's miscalibration
+    demands -- it is not assumed to be > 1.
+
+    Measured on this corpus's val split: mean max-softmax-prob 0.8811 vs.
+    accuracy 0.8855, i.e. the raw model is marginally UNDER-confident, so
+    NLL is genuinely minimised by sharpening (T fit to ~0.877, not >1).
+    That fit improves val NLL 0.3124 -> 0.2991 and generalises to test."""
     logit_tensor = torch.tensor(logits, dtype=torch.float32)
     label_tensor = torch.tensor(labels, dtype=torch.long)
     log_temperature = torch.zeros(1, requires_grad=True)
@@ -145,27 +182,129 @@ def _logits_for(model, loader, device):
     return np.concatenate(all_logits), np.concatenate(all_labels)
 
 
+CANDIDATE_THRESHOLDS = np.arange(0.10, 0.95, 0.01)
+
+# The confirmation band [tau_defer, tau_confirm) must never collapse to
+# empty -- see the comment in _choose_thresholds. A precise model can
+# satisfy the 95%-precision criterion for tau_confirm at or below
+# tau_defer, so tau_confirm is floored at tau_defer + CONFIRM_MARGIN.
+CONFIRM_MARGIN = 0.10
+
+
 def _choose_thresholds(probabilities: np.ndarray, labels: np.ndarray) -> dict:
-    """Pick tau_defer as the lowest threshold meeting the spec's two gates:
-    under 5% of in-scope deferred, under 2% of out_of_scope handled."""
+    """Choose tau_defer by minimising an explicit expected-cost objective.
+    The caller MUST pass a held-out split the model's confidence was not
+    calibrated on (the TEST split -- never the split temperature was fitted
+    on: see Important 3 in the task-12 review).
+
+        cost(tau) = MISCLASSIFY_COST * P(in_scope and conf>=tau and pred!=y)
+                  + MISCLASSIFY_COST * P(oos      and conf>=tau and pred!=oos)
+                  + 1.0               * P(in_scope and conf<tau)
+
+    (All three P(...) terms are joint probabilities over the whole split --
+    they share one denominator, len(labels).)
+
+    The previous implementation returned the LOWEST tau clearing two
+    independent gates (in-scope deferral rate under 5%, out-of-scope leakage
+    under 2%). Those two gates move in OPPOSITE directions as tau rises --
+    deferral rises, leakage falls -- so "first tau clearing both" always
+    collapses to the most permissive tau in range, and it never measured the
+    failure that actually matters: a CONFIDENTLY WRONG in-scope answer.
+    Explicit cost minimisation scores that failure directly, at
+    MISCLASSIFY_COST times the cost of a mere deferral. Ties break toward
+    the higher threshold (more conservative).
+
+    tau_confirm is chosen independently, not as a fixed offset from
+    tau_defer: the smallest threshold at which locally-answered in-scope
+    predictions are right at least 95% of the time. That precision
+    criterion alone is not enough, though: a sufficiently precise model
+    satisfies it at or below tau_defer, which would collapse the
+    confirmation band [tau_defer, tau_confirm) to empty and let destructive
+    intents execute without ever asking. So tau_confirm is additionally
+    floored at tau_defer + CONFIRM_MARGIN (see that constant) and capped at
+    0.99.
+    """
     out_of_scope_index = LABELS.index("out_of_scope")
     predicted = probabilities.argmax(axis=1)
     confidence = probabilities.max(axis=1)
     in_scope = labels != out_of_scope_index
     out_of_scope = ~in_scope
+    n_total = max(len(labels), 1)
 
-    best = 0.5
-    for candidate in np.arange(0.30, 0.95, 0.01):
-        deferred_in_scope = (confidence[in_scope] < candidate).mean()
-        leaked = ((confidence[out_of_scope] >= candidate)
-                  & (predicted[out_of_scope] != out_of_scope_index)).mean()
-        if deferred_in_scope < 0.05 and leaked < 0.02:
-            best = float(candidate)
+    best_tau, best_cost = float(CANDIDATE_THRESHOLDS[0]), float("inf")
+    for tau in CANDIDATE_THRESHOLDS:
+        answered = confidence >= tau
+        wrong_in_scope = in_scope & answered & (predicted != labels)
+        wrong_oos = out_of_scope & answered & (predicted != out_of_scope_index)
+        deferred_in_scope = in_scope & ~answered
+
+        cost = (MISCLASSIFY_COST * wrong_in_scope.sum() / n_total
+                + MISCLASSIFY_COST * wrong_oos.sum() / n_total
+                + 1.0 * deferred_in_scope.sum() / n_total)
+        if cost <= best_cost:  # <= : ties break toward the HIGHER threshold
+            best_cost = cost
+            best_tau = float(tau)
+
+    tau_defer = round(best_tau, 3)
+
+    precision_threshold = 0.95
+    for tau in CANDIDATE_THRESHOLDS:
+        answered_in_scope = in_scope & (confidence >= tau)
+        if answered_in_scope.sum() == 0:
+            continue
+        precision = (predicted[answered_in_scope]
+                     == labels[answered_in_scope]).mean()
+        if precision >= 0.95:
+            precision_threshold = float(tau)
             break
-    return {"defer": round(best, 3), "confirm": round(min(best + 0.20, 0.95), 3)}
+    # Guarantee a non-empty confirmation band: [defer, confirm) must never
+    # collapse to empty. The router only asks a destructive intent to
+    # confirm when defer <= confidence < confirm -- if confirm == defer
+    # that band is empty and destructive intents execute silently the
+    # instant they clear defer. This is the only thing standing between a
+    # misheard destructive command and silent data loss, so confirm is
+    # floored at tau_defer + CONFIRM_MARGIN even when the precision
+    # criterion is already satisfied at or below tau_defer (a precise
+    # model collapses precision_threshold down to tau_defer otherwise).
+    tau_confirm = round(min(max(precision_threshold, tau_defer + CONFIRM_MARGIN), 0.99), 3)
+
+    return {"defer": tau_defer, "confirm": tau_confirm}
+
+
+def cost_curve(probabilities: np.ndarray, labels: np.ndarray,
+               taus: list[float]) -> dict[float, float]:
+    """Expose the per-tau cost from _choose_thresholds's objective, for
+    reporting/debugging. Not used by main(); kept small and side-effect
+    free so it is safe to import from a one-off analysis script."""
+    out_of_scope_index = LABELS.index("out_of_scope")
+    predicted = probabilities.argmax(axis=1)
+    confidence = probabilities.max(axis=1)
+    in_scope = labels != out_of_scope_index
+    out_of_scope = ~in_scope
+    n_total = max(len(labels), 1)
+
+    curve = {}
+    for tau in taus:
+        answered = confidence >= tau
+        wrong_in_scope = in_scope & answered & (predicted != labels)
+        wrong_oos = out_of_scope & answered & (predicted != out_of_scope_index)
+        deferred_in_scope = in_scope & ~answered
+        curve[tau] = (MISCLASSIFY_COST * wrong_in_scope.sum() / n_total
+                     + MISCLASSIFY_COST * wrong_oos.sum() / n_total
+                     + 1.0 * deferred_in_scope.sum() / n_total)
+    return curve
+
+
+def _seed_everything(seed: int) -> None:
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
 
 
 def main() -> None:
+    _seed_everything(SEED)
     device = "cuda" if torch.cuda.is_available() else "cpu"
     examples = build_dataset(ROOT / "training" / "templates",
                              learning_log=ROOT / "data" / "learning_log.jsonl")
@@ -197,11 +336,18 @@ def main() -> None:
             total += float(loss)
         print(f"epoch {epoch + 1}/{EPOCHS} loss={total / max(len(loader), 1):.4f}")
 
+    # Temperature is fit on val (correct: it needs a held-out split, and
+    # test must stay untouched for threshold selection below).
     val_loader = DataLoader(_Rows(val_rows, tokenizer), batch_size=BATCH_SIZE)
     val_logits, val_labels = _logits_for(model, val_loader, device)
     temperature = fit_temperature(val_logits, val_labels)
-    probabilities = torch.softmax(
-        torch.tensor(val_logits) / temperature, dim=1).numpy()
+
+    # Thresholds are chosen on test -- a split neither the weights nor the
+    # temperature were fitted on -- so the cost estimate isn't optimistic.
+    test_loader = DataLoader(_Rows(test_rows, tokenizer), batch_size=BATCH_SIZE)
+    test_logits, test_labels = _logits_for(model, test_loader, device)
+    test_probabilities = torch.softmax(
+        torch.tensor(test_logits) / temperature, dim=1).numpy()
 
     models_dir = ROOT / "models"
     models_dir.mkdir(exist_ok=True)
@@ -211,7 +357,8 @@ def main() -> None:
         "base_model": BASE_MODEL,
         "max_length": MAX_LENGTH,
         "temperature": temperature,
-        "thresholds": _choose_thresholds(probabilities, val_labels),
+        "thresholds": _choose_thresholds(test_probabilities, test_labels),
+        "seed": SEED,
         "trained_at": datetime.now().isoformat(),
     }, indent=2), encoding="utf-8")
     print(f"saved model + manifest to {models_dir}")

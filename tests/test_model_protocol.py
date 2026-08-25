@@ -31,5 +31,5 @@ def test_thresholds_load_from_manifest(tmp_path):
 
 
 def test_missing_manifest_raises_with_build_instructions(tmp_path):
-    with pytest.raises(FileNotFoundError, match="training/train.py"):
+    with pytest.raises(FileNotFoundError, match="python -m training.train"):
         Thresholds.from_manifest(tmp_path / "absent.json")

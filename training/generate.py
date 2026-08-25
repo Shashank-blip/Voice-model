@@ -6,12 +6,23 @@ input is Whisper output, not typed text), and merged real phrases from the
 learning log."""
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
+# Allow `python training/generate.py` (script's own directory on
+# sys.path[0], not the repo root) as well as `python -m training.generate`
+# (repo root already on sys.path). Must run before the local-package
+# imports below (none needed today, kept for consistency with the other
+# training/*.py entry points).
+_ROOT_FOR_IMPORTS = Path(__file__).resolve().parent.parent
+if str(_ROOT_FOR_IMPORTS) not in sys.path:
+    sys.path.insert(0, str(_ROOT_FOR_IMPORTS))
+
 import json
 import random
 import re
 from dataclasses import dataclass
 from itertools import product
-from pathlib import Path
 
 import yaml
 
@@ -86,13 +97,20 @@ def build_dataset(templates_dir: Path, learning_log: Path | None = None,
                         Example(add_stt_noise(text, rng), intent, template_id))
 
     if learning_log and Path(learning_log).exists():
-        for line in Path(learning_log).read_text(encoding="utf-8").splitlines():
+        for index, line in enumerate(
+                Path(learning_log).read_text(encoding="utf-8").splitlines()):
             if not line.strip():
                 continue
             record = json.loads(line)
             if record.get("intent"):
+                # Each row needs a UNIQUE template_id. grouped_split assigns
+                # whole template_id groups to one split; a shared
+                # "learning_log" id would put every up-weighted real user
+                # phrase into whichever single split that one id draws --
+                # possibly val or test, where none of them would ever train.
                 examples.append(Example(record["transcript"], record["intent"],
-                                        "learning_log", LEARNING_LOG_WEIGHT))
+                                        f"learning_log:{index}",
+                                        LEARNING_LOG_WEIGHT))
 
     # Deduplicate on (text, intent), keeping the highest weight.
     best: dict[tuple[str, str], Example] = {}
